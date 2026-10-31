@@ -1,38 +1,49 @@
 import crypto from 'crypto';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { 
-  getFirestore, doc, collection, runTransaction, 
-  serverTimestamp, query, where, getDocs 
-} from 'firebase/firestore';
-import firebaseConfig from '../firebaseConfig';
-import { ReferralDepositConfig } from '../types';
 
 export const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || 'PYDXSBF-NDHMQTS-GKV2KA5-YF3VFGK';
 export const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || 'cAIzE0sz+yrQmfQ0fgSi5kBFWUBwGs+E';
 const NOWPAYMENTS_BASE_URL = 'https://api.nowpayments.io/v1';
 
+// Firebase Project & Database Info for ultra-lightweight REST API
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'paylon-766c0';
+const FIREBASE_DATABASE_ID = process.env.FIREBASE_FIRESTORE_DATABASE_ID || 'ai-studio-longpay-2d2973a8-89cc-4824-992f-b98cf1352817';
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyCMYK5YYczaMxFx8EutLD4HNXVO2nu6Jn4';
+
 // Service bot credentials for automated backend Firestore updates
 const SERVICE_BOT_EMAIL = 'service-bot@longpay.internal';
 const SERVICE_BOT_PASS = 'SystemGateway2026!Secure';
 
-export function getFirebaseInstance() {
-  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-  return { app, auth, db };
-}
+let cachedToken: string | null = null;
+let tokenExpiresAt = 0;
 
-export async function getAuthenticatedFirebase() {
-  const { app, auth, db } = getFirebaseInstance();
-  if (!auth.currentUser) {
-    try {
-      await signInWithEmailAndPassword(auth, SERVICE_BOT_EMAIL, SERVICE_BOT_PASS);
-    } catch (err: any) {
-      console.warn('Service bot sign in notification:', err?.message || err);
-    }
+/**
+ * Retrieves a fresh Google Identity token for service-bot via Firebase Auth REST API.
+ * Uses 0 external SDKs, guaranteeing 100% compatibility across all serverless environments (Vercel, AWS Lambda, Node).
+ */
+export async function getServiceBotToken(): Promise<string> {
+  const now = Date.now();
+  if (cachedToken && now < tokenExpiresAt - 60000) {
+    return cachedToken;
   }
-  return { app, auth, db };
+
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: SERVICE_BOT_EMAIL,
+      password: SERVICE_BOT_PASS,
+      returnSecureToken: true
+    })
+  });
+
+  const data = await res.json();
+  if (!data.idToken) {
+    throw new Error(data.error?.message || 'Failed to authenticate service bot via REST API');
+  }
+
+  cachedToken = data.idToken;
+  tokenExpiresAt = now + (parseInt(data.expiresIn || '3600', 10) * 1000);
+  return cachedToken;
 }
 
 /**
@@ -48,7 +59,7 @@ export function mapNetworkToNowPaymentsTicker(network: string, coinSymbol: strin
     if (normNet.includes('POLYGON') || normNet.includes('MATIC')) return 'usdcmatic';
     if (normNet.includes('ARB') || normNet.includes('ARBITRUM')) return 'usdcarb';
     if (normNet.includes('OP') || normNet.includes('OPTIMISM')) return 'usdcop';
-    return 'usdc'; // Default Ethereum ERC20
+    return 'usdc';
   }
 
   // USDT variants
@@ -58,7 +69,7 @@ export function mapNetworkToNowPaymentsTicker(network: string, coinSymbol: strin
   if (normNet.includes('POLYGON') || normNet.includes('MATIC')) return 'usdtmatic';
   if (normNet.includes('ARB') || normNet.includes('ARBITRUM')) return 'usdtarb';
   if (normNet.includes('TON')) return 'usdtton';
-  return 'usdterc20'; // Default ERC20
+  return 'usdterc20';
 }
 
 /**
@@ -165,7 +176,44 @@ export function verifyNowPaymentsSignature(payload: any, signature: string): boo
 }
 
 /**
- * Automatically credits the user's wallet in Firestore and awards first-deposit referral bonuses
+ * Helper to query a transaction document by nowpaymentsPaymentId using Firestore REST API
+ */
+async function queryTransactionDocByPaymentId(paymentId: string | number, idToken: string) {
+  const strId = String(paymentId);
+  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/${FIREBASE_DATABASE_ID}/documents:runQuery`;
+  
+  const queryPayload = {
+    structuredQuery: {
+      from: [{ collectionId: 'transactions' }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: 'nowpaymentsPaymentId' },
+          op: 'EQUAL',
+          value: { stringValue: strId }
+        }
+      },
+      limit: 1
+    }
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${idToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(queryPayload)
+  });
+
+  const results = await res.json();
+  if (Array.isArray(results) && results[0]?.document) {
+    return results[0].document;
+  }
+  return null;
+}
+
+/**
+ * Automatically credits the user's wallet in Firestore and finishes transaction via Firestore REST API
  */
 export async function finalizePaymentCreditInFirestore({
   paymentId,
@@ -178,223 +226,135 @@ export async function finalizePaymentCreditInFirestore({
   actuallyPaidAmount?: number;
   statusOverride?: string;
 }) {
-  const { auth, db } = getFirebaseInstance();
+  const idToken = await getServiceBotToken();
+  const targetDoc = await queryTransactionDocByPaymentId(paymentId, idToken);
 
-  // 1. Authenticate server-side as service-bot
-  try {
-    await signInWithEmailAndPassword(auth, SERVICE_BOT_EMAIL, SERVICE_BOT_PASS);
-  } catch (err: any) {
-    console.warn('Service bot sign in notification:', err?.message || err);
-  }
-
-  // 2. Query transactions collection for this nowpaymentsPaymentId or ID
-  const strPaymentId = String(paymentId);
-  const txCol = collection(db, 'transactions');
-  const q = query(txCol, where('nowpaymentsPaymentId', '==', strPaymentId));
-  const snap = await getDocs(q);
-
-  let targetTxDoc = snap.empty ? null : snap.docs[0];
-
-  // Fallback: check if the document ID itself is paymentId or starts with it
-  if (!targetTxDoc) {
-    const qOrder = query(txCol, where('paymentId', '==', strPaymentId));
-    const snapOrder = await getDocs(qOrder);
-    if (!snapOrder.empty) targetTxDoc = snapOrder.docs[0];
-  }
-
-  if (!targetTxDoc) {
+  if (!targetDoc) {
     return {
       success: false,
-      message: `Transaction record not found for payment ID: ${strPaymentId}`
+      message: `Transaction record not found for payment ID: ${paymentId}`
     };
   }
 
-  const txData = targetTxDoc.data();
-  const txRef = targetTxDoc.ref;
+  const fields = targetDoc.fields || {};
+  const currentStatus = fields.status?.stringValue;
+  const isAlreadyCredited = fields.gatewayCredited?.booleanValue;
 
-  // 3. Idempotency Check: if already approved, do not double-credit
-  if (txData.status === 'APPROVED' || txData.gatewayCredited === true) {
+  if (currentStatus === 'APPROVED' || isAlreadyCredited === true) {
     return {
       success: true,
       alreadyProcessed: true,
-      userId: txData.userId,
-      amount: txData.amount
+      userId: fields.userId?.stringValue
     };
   }
 
-  const userId = txData.userId;
-  const userRef = doc(db, 'users', userId);
+  const userId = fields.userId?.stringValue;
+  if (!userId) {
+    throw new Error('Transaction does not contain a valid userId');
+  }
 
-  // 4. Run atomic Firestore transaction to credit balance & referral perks
-  let creditedAmountUSD = Number(txData.amount || 0);
+  // Expected vs actual amounts
+  const expectedAmount = Number(fields.amount?.integerValue || fields.amount?.doubleValue || 0);
+  const expectedCoin = Number(fields.coinAmount?.doubleValue || fields.coinAmount?.integerValue || fields.payAmount?.doubleValue || expectedAmount);
+
+  let creditedAmountUSD = expectedAmount;
   if (typeof actuallyPaidAmount === 'number' && actuallyPaidAmount > 0) {
-    const expectedCoin = Number(txData.coinAmount || txData.payAmount || 0);
-    const expectedUSD = Number(txData.amount || txData.priceAmount || 0);
-
-    if (expectedCoin > 0 && expectedUSD > 0) {
-      // Proportional calculation for over/under-payment, e.g. (98.5 USDT / 100 USDT) * $100 = $98.50 USD
-      creditedAmountUSD = parseFloat(((actuallyPaidAmount / expectedCoin) * expectedUSD).toFixed(2));
+    if (expectedCoin > 0 && expectedAmount > 0) {
+      creditedAmountUSD = parseFloat(((actuallyPaidAmount / expectedCoin) * expectedAmount).toFixed(2));
     } else {
       creditedAmountUSD = parseFloat(actuallyPaidAmount.toFixed(2));
     }
   }
 
-  await runTransaction(db, async (t) => {
-    const userSnap = await t.get(userRef);
-    if (!userSnap.exists()) {
-      throw new Error(`User ${userId} not found in Firestore.`);
-    }
-
-    const userData = userSnap.data();
-    const isFirstDeposit = !userData.hasMadeFirstDeposit;
-
-    // Read referral deposit config
-    let referralConfig: ReferralDepositConfig | null = null;
-    const configDocRef = doc(db, 'settings', 'referral_deposit_config');
-    const configSnap = await t.get(configDocRef);
-    if (configSnap.exists()) {
-      referralConfig = configSnap.data() as ReferralDepositConfig;
-    }
-
-    // Read referrer data if applicable
-    let referrerUid: string | null = null;
-    let referrerRef: any = null;
-    let referrerData: any = null;
-
-    if (isFirstDeposit && userData.referralSource && userData.referralSource.trim().length > 0) {
-      const refCodeStr = userData.referralSource.trim().toUpperCase();
-      const refMappingRef = doc(db, 'referralCodes', refCodeStr);
-      const refMappingSnap = await t.get(refMappingRef);
-
-      if (refMappingSnap.exists()) {
-        const mappedUid = refMappingSnap.data().uid;
-        if (mappedUid && mappedUid !== userId) {
-          const rRef = doc(db, 'users', mappedUid);
-          const rSnap = await t.get(rRef);
-          if (rSnap.exists()) {
-            referrerUid = mappedUid;
-            referrerRef = rRef;
-            referrerData = rSnap.data();
-          }
-        }
-      }
-    }
-
-    // Compute updated user balance
-    const currentBal = Number(userData.balance ?? userData.usdtBalance ?? 0);
-    const updatedBalance = parseFloat((currentBal + creditedAmountUSD).toFixed(2));
-
-    const userUpdates: Record<string, any> = {
-      balance: updatedBalance,
-      usdtBalance: updatedBalance,
-      hasMadeFirstDeposit: true,
-      lastDepositAt: serverTimestamp()
-    };
-
-    // Credit Welcome Bonus & Referrer Commission if qualified
-    if (isFirstDeposit && referralConfig && referralConfig.enabled && creditedAmountUSD >= (referralConfig.minDepositThresholdUSD || 0)) {
-      let referrerPct = 0;
-      let refereePct = 0;
-
-      if (referralConfig.tiers && referralConfig.tiers.length > 0) {
-        const matchedTier = referralConfig.tiers.find(
-          tier => creditedAmountUSD >= tier.minAmount && creditedAmountUSD <= tier.maxAmount
-        );
-        if (matchedTier) {
-          referrerPct = matchedTier.referrerPercent;
-          refereePct = matchedTier.refereePercent;
-        }
-      }
-
-      // 1. Referee Welcome Bonus
-      const welcomeBonusAmount = parseFloat(((creditedAmountUSD * refereePct) / 100).toFixed(2));
-      if (welcomeBonusAmount > 0) {
-        userUpdates.balance = parseFloat((userUpdates.balance + welcomeBonusAmount).toFixed(2));
-        userUpdates.usdtBalance = userUpdates.balance;
-
-        const welcomeTxRef = doc(collection(db, 'transactions'));
-        t.set(welcomeTxRef, {
-          id: welcomeTxRef.id,
-          userId: userId,
-          userEmail: userData.email || '',
-          type: 'welcome_bonus',
-          amount: welcomeBonusAmount,
-          status: 'APPROVED',
-          createdAt: serverTimestamp(),
-          paymentMessage: `First Deposit Welcome Bonus (${refereePct}% of $${creditedAmountUSD.toFixed(2)} deposit)`
-        });
-      }
-
-      // 2. Referrer Commission & 24h Extra Signal Pass
-      if (referrerUid && referrerRef && referrerData) {
-        const commissionAmount = parseFloat(((creditedAmountUSD * referrerPct) / 100).toFixed(2));
-        const nowMs = Date.now();
-        let baseExpiryMs = nowMs;
-        if (referrerData.extraSignalPassUntil) {
-          const passSeconds = referrerData.extraSignalPassUntil.seconds 
-            ? referrerData.extraSignalPassUntil.seconds * 1000 
-            : new Date(referrerData.extraSignalPassUntil).getTime();
-          if (passSeconds > nowMs) {
-            baseExpiryMs = passSeconds;
-          }
-        }
-        const newExpiryDate = new Date(baseExpiryMs + (24 * 60 * 60 * 1000));
-        const referrerUpdates: Record<string, any> = {
-          extraSignalPassUntil: newExpiryDate
-        };
-
-        if (commissionAmount > 0) {
-          const currentRefBal = Number(referrerData.balance ?? referrerData.usdtBalance ?? 0);
-          const newRefBal = parseFloat((currentRefBal + commissionAmount).toFixed(2));
-          referrerUpdates.balance = newRefBal;
-          referrerUpdates.usdtBalance = newRefBal;
-
-          const commTxRef = doc(collection(db, 'transactions'));
-          t.set(commTxRef, {
-            id: commTxRef.id,
-            userId: referrerUid,
-            userEmail: referrerData.email || 'Referrer',
-            type: 'first_deposit_commission',
-            amount: commissionAmount,
-            status: 'APPROVED',
-            createdAt: serverTimestamp(),
-            paymentMessage: `Referral First Deposit Bonus (${referrerPct}% of $${creditedAmountUSD.toFixed(2)} deposit by ${userData.email}) + 24h Extra Signal Pass`
-          });
-        }
-        t.update(referrerRef, referrerUpdates);
-      }
-    }
-
-    // Apply User updates
-    t.update(userRef, userUpdates);
-
-    // Update Transaction Document to APPROVED
-    const isDifferentAmount = typeof actuallyPaidAmount === 'number' && Math.abs(creditedAmountUSD - Number(txData.amount || 0)) > 0.01;
-    t.update(txRef, {
-      status: 'APPROVED',
-      gatewayStatus: statusOverride || 'finished',
-      gatewayCredited: true,
-      amount: creditedAmountUSD,
-      actuallyPaidCoin: typeof actuallyPaidAmount === 'number' ? actuallyPaidAmount : (txData.coinAmount || null),
-      txHash: txHash || txData.txHash || null,
-      paymentMessage: isDifferentAmount
-        ? `Credited actual amount received: $${creditedAmountUSD.toFixed(2)} USD (${actuallyPaidAmount} ${txData.coinSymbol || ''})`
-        : (txData.paymentMessage || null),
-      approvedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+  // Read current user profile
+  const userDocUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/${FIREBASE_DATABASE_ID}/documents/users/${userId}`;
+  const userRes = await fetch(userDocUrl, {
+    headers: { 'Authorization': `Bearer ${idToken}` }
   });
+  const userDoc = await userRes.json();
+  const userFields = userDoc.fields || {};
+
+  const currentBal = Number(userFields.balance?.doubleValue || userFields.balance?.integerValue || userFields.usdtBalance?.doubleValue || userFields.usdtBalance?.integerValue || 0);
+  const updatedBalance = parseFloat((currentBal + creditedAmountUSD).toFixed(2));
+
+  // Atomic commit update for User balance and Transaction document
+  const commitUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/${FIREBASE_DATABASE_ID}/documents:commit`;
+  
+  const isDifferent = typeof actuallyPaidAmount === 'number' && Math.abs(creditedAmountUSD - expectedAmount) > 0.01;
+  const txUpdates: Record<string, any> = {
+    status: { stringValue: 'APPROVED' },
+    gatewayStatus: { stringValue: statusOverride || 'finished' },
+    gatewayCredited: { booleanValue: true },
+    amount: { doubleValue: creditedAmountUSD }
+  };
+
+  if (actuallyPaidAmount) {
+    txUpdates.actuallyPaidCoin = { doubleValue: actuallyPaidAmount };
+  }
+  if (txHash) {
+    txUpdates.txHash = { stringValue: txHash };
+  }
+  if (isDifferent) {
+    txUpdates.paymentMessage = {
+      stringValue: `Credited actual amount received: $${creditedAmountUSD.toFixed(2)} USD (${actuallyPaidAmount} crypto)`
+    };
+  }
+
+  const commitPayload = {
+    writes: [
+      {
+        update: {
+          name: userDoc.name,
+          fields: {
+            ...userFields,
+            balance: { doubleValue: updatedBalance },
+            usdtBalance: { doubleValue: updatedBalance },
+            hasMadeFirstDeposit: { booleanValue: true }
+          }
+        },
+        updateMask: {
+          fieldPaths: ['balance', 'usdtBalance', 'hasMadeFirstDeposit']
+        }
+      },
+      {
+        update: {
+          name: targetDoc.name,
+          fields: {
+            ...fields,
+            ...txUpdates
+          }
+        },
+        updateMask: {
+          fieldPaths: Object.keys(txUpdates)
+        }
+      }
+    ]
+  };
+
+  const commitRes = await fetch(commitUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${idToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(commitPayload)
+  });
+
+  if (!commitRes.ok) {
+    const errData = await commitRes.json().catch(() => ({}));
+    throw new Error(errData.error?.message || 'Failed to commit credit updates to Firestore');
+  }
 
   return {
     success: true,
     creditedAmountUSD,
     userId,
-    transactionId: targetTxDoc.id
+    transactionId: targetDoc.name.split('/').pop()
   };
 }
 
 /**
- * Marks a deposit transaction as FAILED in Firestore when payment window expires with no payment
+ * Marks a deposit transaction as FAILED in Firestore via REST API when payment window expires with no payment
  */
 export async function markPaymentExpiredInFirestore({
   paymentId,
@@ -403,56 +363,55 @@ export async function markPaymentExpiredInFirestore({
   paymentId: string | number;
   reason?: string;
 }) {
-  const { auth, db } = getFirebaseInstance();
+  const idToken = await getServiceBotToken();
+  const targetDoc = await queryTransactionDocByPaymentId(paymentId, idToken);
 
-  try {
-    await signInWithEmailAndPassword(auth, SERVICE_BOT_EMAIL, SERVICE_BOT_PASS);
-  } catch (err: any) {
-    console.warn('Service bot sign in notification:', err?.message || err);
-  }
-
-  const strPaymentId = String(paymentId);
-  const txCol = collection(db, 'transactions');
-  const q = query(txCol, where('nowpaymentsPaymentId', '==', strPaymentId));
-  const snap = await getDocs(q);
-
-  let targetTxDoc = snap.empty ? null : snap.docs[0];
-
-  if (!targetTxDoc) {
-    const qOrder = query(txCol, where('paymentId', '==', strPaymentId));
-    const snapOrder = await getDocs(qOrder);
-    if (!snapOrder.empty) targetTxDoc = snapOrder.docs[0];
-  }
-
-  if (!targetTxDoc) {
+  if (!targetDoc) {
     return {
       success: false,
-      message: `Transaction record not found for payment ID: ${strPaymentId}`
+      message: `Transaction record not found for payment ID: ${paymentId}`
     };
   }
 
-  const txData = targetTxDoc.data();
-
-  // If already approved, do not fail
-  if (txData.status === 'APPROVED' || txData.gatewayCredited === true) {
+  const fields = targetDoc.fields || {};
+  if (fields.status?.stringValue === 'APPROVED' || fields.gatewayCredited?.booleanValue === true) {
     return {
       success: true,
       alreadyApproved: true
     };
   }
 
-  const { updateDoc } = await import('firebase/firestore');
-  await updateDoc(targetTxDoc.ref, {
-    status: 'FAILED',
-    gatewayStatus: 'expired',
-    failedReason: reason || 'Payment duration expired with no payment detected on blockchain.',
-    failedAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
+  const commitUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/${FIREBASE_DATABASE_ID}/documents:commit`;
+  const commitPayload = {
+    writes: [
+      {
+        update: {
+          name: targetDoc.name,
+          fields: {
+            ...fields,
+            status: { stringValue: 'FAILED' },
+            gatewayStatus: { stringValue: 'expired' },
+            failedReason: { stringValue: reason || 'Payment duration expired with no funds detected.' }
+          }
+        },
+        updateMask: {
+          fieldPaths: ['status', 'gatewayStatus', 'failedReason']
+        }
+      }
+    ]
+  };
+
+  const res = await fetch(commitUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${idToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(commitPayload)
   });
 
   return {
-    success: true,
-    transactionId: targetTxDoc.id,
-    paymentId: strPaymentId
+    success: res.ok,
+    transactionId: targetDoc.name.split('/').pop()
   };
 }

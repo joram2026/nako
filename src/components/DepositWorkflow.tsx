@@ -529,15 +529,43 @@ export default function DepositWorkflow({
       }
 
       const orderExpiry = data.expiresAt || (Date.now() + 20 * 60 * 1000);
+      let transactionId = data.transactionId;
+      if (!transactionId && user?.uid) {
+        try {
+          const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+          const docRef = await addDoc(collection(db, 'transactions'), {
+            userId: user.uid,
+            userEmail: user.email || '',
+            type: 'deposit_crypto',
+            amount: numAmount,
+            priceAmount: numAmount,
+            coinSymbol: currentSymbol,
+            coinAmount: data.payAmount,
+            payAmount: data.payAmount,
+            network: data.network || selectedNetwork?.name || 'Crypto',
+            address: data.payAddress,
+            nowpaymentsPaymentId: String(data.paymentId),
+            status: 'PENDING APPROVAL',
+            gateway: 'nowpayments',
+            gatewayStatus: data.paymentStatus || 'waiting',
+            expiresAtMs: orderExpiry,
+            createdAt: serverTimestamp()
+          });
+          transactionId = docRef.id;
+        } catch (clientFsErr) {
+          console.warn('Client fallback transaction write warning:', clientFsErr);
+        }
+      }
+
       const newOrder: NowPaymentsActiveOrder = {
-        paymentId: data.paymentId,
+        paymentId: String(data.paymentId),
         payAddress: data.payAddress,
         payAmount: data.payAmount,
         payCurrency: data.payCurrency,
         priceAmount: data.priceAmount,
         network: data.network || selectedNetwork?.name || 'Crypto',
         paymentStatus: data.paymentStatus || 'waiting',
-        transactionId: data.transactionId
+        transactionId: transactionId || undefined
       };
 
       hasExpiredRef.current = false;
