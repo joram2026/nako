@@ -1,0 +1,265 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "Administrator account mapping",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["email"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User account profile and balance record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "country": { "type": "string", "maxLength": 64 },
+        "balance": { "type": "number" },
+        "usdtBalance": { "type": "number" },
+        "tradeBalance": { "type": "number" },
+        "lockedCopyTradeCapital": { "type": "number" },
+        "withdrawalEnabled": { "type": "boolean" },
+        "tradeEnabled": { "type": "boolean" },
+        "uniqueCode": { "type": "string", "maxLength": 32 },
+        "referralSource": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["uid", "email", "balance", "withdrawalEnabled"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial operation audit log",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "userEmail": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "maxLength": 64 },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "maxLength": 32 },
+        "network": { "type": "string", "maxLength": 32 },
+        "address": { "type": "string", "maxLength": 256 }
+      },
+      "required": ["userId", "type", "amount", "status"]
+    },
+    "PromoCode": {
+      "title": "PromoCode",
+      "description": "Voucher promo code definitions",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 32 },
+        "title": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "maxLength": 32 },
+        "rewardValue": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["code", "type", "rewardValue", "isActive"]
+    },
+    "VoucherClaim": {
+      "title": "VoucherClaim",
+      "description": "User voucher redemption claim",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "promoCodeId": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["userId", "code"]
+    },
+    "ReferralCode": {
+      "title": "ReferralCode",
+      "description": "Affiliate mapping",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["uid", "code"]
+    },
+    "CryptoNetwork": {
+      "title": "CryptoNetwork",
+      "description": "Supported crypto networks and deposit addresses",
+      "type": "object",
+      "properties": {
+        "tokenName": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["tokenName"]
+    },
+    "P2PMerchant": {
+      "title": "P2PMerchant",
+      "description": "P2P escrow exchange merchant details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 128 },
+        "paymentNumber": { "type": "string", "maxLength": 64 },
+        "rate": { "type": "number" }
+      },
+      "required": ["name", "paymentNumber", "rate"]
+    },
+    "CryptoPrice": {
+      "title": "CryptoPrice",
+      "description": "Market ticker pricing",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string", "maxLength": 16 },
+        "price": { "type": "number" }
+      },
+      "required": ["symbol", "price"]
+    },
+    "Investment": {
+      "title": "Investment",
+      "description": "User staking and signal investments",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" }
+      },
+      "required": ["userId", "amount"]
+    },
+    "BotTemplate": {
+      "title": "BotTemplate",
+      "description": "Algorithmic bot catalog item",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 64 },
+        "category": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["name", "category"]
+    },
+    "UserBot": {
+      "title": "UserBot",
+      "description": "Active user trading bot deployment",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "capital": { "type": "number" },
+        "status": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["userId", "capital", "status"]
+    },
+    "CopyTraderLead": {
+      "title": "CopyTraderLead",
+      "description": "Expert copy trader profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 64 },
+        "signalsPerDay": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["name"]
+    },
+    "UserCopyTrade": {
+      "title": "UserCopyTrade",
+      "description": "Active user copy trade contract",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "leadId": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["userId", "leadId", "amount", "status"]
+    },
+    "InAppAd": {
+      "title": "InAppAd",
+      "description": "Promotional banners and advertisements",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 128 },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["title", "isActive"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "System-wide application configuration",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "EmailVerification": {
+      "title": "EmailVerification",
+      "description": "OTP verification tracking",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 128 },
+        "otp": { "type": "string", "maxLength": 16 }
+      },
+      "required": ["email", "otp"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "System administrator document"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile, balance, permissions"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "User wallet deposits, withdrawals, swaps, bot trades"
+    },
+    "/promo_codes/{codeId}": {
+      "schema": "PromoCode",
+      "description": "Vouchers and promotional bonus codes"
+    },
+    "/user_voucher_claims/{claimId}": {
+      "schema": "VoucherClaim",
+      "description": "Redeemed voucher audit logs"
+    },
+    "/referralCodes/{code}": {
+      "schema": "ReferralCode",
+      "description": "Affiliate and referral mapping"
+    },
+    "/crypto_networks/{networkId}": {
+      "schema": "CryptoNetwork",
+      "description": "Deposit & withdrawal chain addresses and tokens"
+    },
+    "/p2p_merchants/{merchantId}": {
+      "schema": "P2PMerchant",
+      "description": "P2P escrow exchange merchants"
+    },
+    "/crypto_prices/{symbol}": {
+      "schema": "CryptoPrice",
+      "description": "Live and cached crypto market price data"
+    },
+    "/investments/{investmentId}": {
+      "schema": "Investment",
+      "description": "User staked capital investments"
+    },
+    "/bot_templates/{templateId}": {
+      "schema": "BotTemplate",
+      "description": "Preset algorithmic trading bot templates"
+    },
+    "/user_bots/{botId}": {
+      "schema": "UserBot",
+      "description": "Active algorithmic trading bot instances"
+    },
+    "/copy_trader_leads/{leadId}": {
+      "schema": "CopyTraderLead",
+      "description": "Professional copy traders and signals"
+    },
+    "/user_copy_trades/{tradeId}": {
+      "schema": "UserCopyTrade",
+      "description": "User active copy trade contracts"
+    },
+    "/settings/{settingId}": {
+      "schema": "Setting",
+      "description": "Global application configuration settings"
+    },
+    "/in_app_ads/{adId}": {
+      "schema": "InAppAd",
+      "description": "Promotional banners and in-app ads"
+    },
+    "/email_verifications/{emailDoc}": {
+      "schema": "EmailVerification",
+      "description": "Registration email OTP verification records"
+    }
+  }
+}

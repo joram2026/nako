@@ -1,0 +1,11 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/nowpayments/create-payment", "destination": "/api/nowpayments-create-payment" },
+    { "source": "/api/nowpayments/webhook", "destination": "/api/nowpayments-webhook" },
+    { "source": "/api/nowpayments/payment-status", "destination": "/api/nowpayments-payment-status" },
+    { "source": "/api/nowpayments/mark-failed", "destination": "/api/nowpayments-mark-failed" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
