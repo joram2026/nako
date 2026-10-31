@@ -53,42 +53,40 @@ export default async function handler(req: any, res: any) {
       });
 
       await transporter.sendMail({
-        from: process.env.SMTP_FROM || `"Morex Security" <${smtpUser}>`,
+        from: process.env.SMTP_FROM || `"Akuna Capital Security" <security@akunacpt.site>`,
         to: email,
-        subject: `Your Morex Verification Code: ${code}`,
-        text: `Hello ${displayName},\n\nYour 6-digit email verification code is: ${code}\n\nThis passcode expires in 10 minutes.\n\nBest regards,\nMorex Security Team`,
+        subject: `Your Akuna Capital Verification Code: ${code}`,
+        text: `Hello ${displayName},\n\nYour 6-digit email verification code is: ${code}\n\nThis passcode expires in 10 minutes.\n\nBest regards,\nAkuna Capital Security Team`,
         html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 20px; background-color: #fcfbf7; border: 1px solid #f0ede4; border-radius: 20px; color: #1c1917;">
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px; background-color: #091420; color: #ffffff;">
             <div style="text-align: center; margin-bottom: 24px;">
-              <div style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); padding: 12px 20px; border-radius: 14px; color: #ffffff; font-weight: 900; font-size: 18px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25);">
-                MOREX HOLDINGS
-              </div>
-              <p style="color: #78716c; font-size: 12px; margin-top: 8px; font-weight: 500;">Secure Arbitrage & Yield Ecosystem</p>
+              <span style="font-size: 20px; font-weight: 900; letter-spacing: 2px; color: #ffffff; text-transform: uppercase;">AKUNA CAPITAL</span>
+              <p style="color: #94a3b8; font-size: 11px; margin-top: 6px; font-weight: 500;">Official Identity Verification Service • akunacpt.site</p>
             </div>
 
-            <div style="background-color: #ffffff; border: 1px solid #e7e5e4; border-radius: 16px; padding: 28px 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);">
-              <h2 style="font-size: 20px; font-weight: 800; color: #0c0a09; margin-top: 0; margin-bottom: 12px;">Verify your email address</h2>
-              <p style="font-size: 14px; line-height: 1.6; color: #44403c; margin-bottom: 24px;">
+            <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px 24px; color: #0f172a;">
+              <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 0; margin-bottom: 12px;">Verify your email address</h2>
+              <p style="font-size: 14px; line-height: 1.6; color: #334155; margin-bottom: 20px;">
                 Hello <strong>${displayName}</strong>,<br>
-                Thank you for joining Morex Holdings. To complete your registration and protect your account, please enter the one-time verification passcode below:
+                Thank you for joining Akuna Capital. To complete your account verification and protect your identity, please enter this one-time passcode:
               </p>
 
-              <div style="text-align: center; margin: 28px 0; background: #fffbeb; border: 2px dashed #f59e0b; border-radius: 14px; padding: 18px;">
-                <span style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 34px; font-weight: 900; letter-spacing: 8px; color: #b45309; display: block;">
+              <div style="text-align: center; margin: 24px 0; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px;">
+                <span style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; display: block;">
                   ${code}
                 </span>
-                <span style="font-size: 11px; color: #a16207; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; display: block;">
-                  Valid for 10 minutes • Do not share
+                <span style="font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; display: block;">
+                  Expires in 10 minutes • Single-use only
                 </span>
               </div>
 
-              <p style="font-size: 12px; line-height: 1.5; color: #78716c; margin-bottom: 0;">
-                If you did not request this verification code, please ignore this email. No account will be created without this passcode.
+              <p style="font-size: 12px; line-height: 1.5; color: #64748b; margin-bottom: 0;">
+                If you did not initiate this request, no action is required and you can safely disregard this email.
               </p>
             </div>
 
-            <div style="text-align: center; margin-top: 24px; font-size: 11px; color: #a8a29e;">
-              © ${new Date().getFullYear()} Morex Holdings Ltd. All rights reserved. Automated security notification.
+            <div style="text-align: center; margin-top: 24px; font-size: 10px; color: #64748b;">
+              © ${new Date().getFullYear()} Akuna Capital (akunacpt.site). All rights reserved. Automated security notification.
             </div>
           </div>
         `,

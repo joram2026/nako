@@ -5,7 +5,7 @@ import {
   getFirestore, doc, collection, runTransaction, 
   serverTimestamp, query, where, getDocs 
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import firebaseConfig from '../firebaseConfig';
 import { ReferralDepositConfig } from '../types';
 
 export const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || 'PYDXSBF-NDHMQTS-GKV2KA5-YF3VFGK';

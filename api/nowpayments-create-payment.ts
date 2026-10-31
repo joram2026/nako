@@ -43,10 +43,10 @@ export default async function handler(req: any, res: any) {
     const selectedNet = (network || 'BEP20').toUpperCase();
     const orderId = `nowpay-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-    // Resolve callback URL dynamically based on host
+    // Resolve callback URL dynamically based on host, falling back to akunacpt.site
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers['x-forwarded-host'] || req.headers.host;
-    const callbackUrl = host ? `${protocol}://${host}/api/nowpayments/webhook` : undefined;
+    const callbackUrl = host ? `${protocol}://${host}/api/nowpayments/webhook` : 'https://akunacpt.site/api/nowpayments/webhook';
 
     // Call NOWPayments API
     const payment = await createNowPaymentsPayment({

@@ -516,10 +516,16 @@ export default function DepositWorkflow({
         })
       });
 
-      const data = await res.json();
+      const rawText = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(rawText && rawText.length < 150 ? rawText : `Server returned status ${res.status}. Please check gateway setup.`);
+      }
 
       if (!res.ok || !data.payAddress) {
-        throw new Error(data.error || 'Failed to initialize automated payment gateway.');
+        throw new Error(data.error || data.message || 'Failed to initialize automated payment gateway.');
       }
 
       const orderExpiry = data.expiresAt || (Date.now() + 20 * 60 * 1000);
@@ -562,7 +568,13 @@ export default function DepositWorkflow({
       try {
         const res = await fetch(`/api/nowpayments/payment-status?paymentId=${activeOrder.paymentId}`);
         if (res.ok) {
-          const data = await res.json();
+          const rawText = await res.text();
+          let data: any = {};
+          try {
+            data = JSON.parse(rawText);
+          } catch {
+            return;
+          }
           const status = data.paymentStatus || 'waiting';
           setPollingStatus(status);
 
@@ -633,7 +645,14 @@ export default function DepositWorkflow({
     try {
       const res = await fetch(`/api/nowpayments/payment-status?paymentId=${activeOrder.paymentId}`);
       if (res.ok) {
-        const data = await res.json();
+        const rawText = await res.text();
+        let data: any = {};
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          toast.error('Unable to parse gateway response.');
+          return;
+        }
         const status = data.paymentStatus || 'waiting';
         setPollingStatus(status);
         if (data.isFinished || status === 'finished' || status === 'confirmed') {

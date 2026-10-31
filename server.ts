@@ -316,7 +316,7 @@ async function startServer() {
         const mailFromEnv = (process.env.SMTP_FROM || '').trim();
         const replyToEnv = (process.env.SMTP_REPLY_TO || '').trim();
 
-        let fromAddress = mailFromEnv || mailUser || 'security@akunacapital.app';
+        let fromAddress = mailFromEnv || mailUser || 'security@akunacpt.site';
         let fromDisplayName = 'Akuna Capital Security';
 
         // Cleanly parse name and address if formatted as "Name <email@domain>"
@@ -327,7 +327,7 @@ async function startServer() {
         }
 
         const replyToAddress = replyToEnv || fromAddress;
-        const senderDomain = fromAddress.includes('@') ? fromAddress.split('@')[1] : 'akunacapital.app';
+        const senderDomain = fromAddress.includes('@') ? fromAddress.split('@')[1] : 'akunacpt.site';
         const messageId = `<akuna.otp.${Date.now()}.${Math.random().toString(36).substring(2, 9)}@${senderDomain}>`;
 
         const greetingName = displayName && typeof displayName === 'string' && displayName.trim() 

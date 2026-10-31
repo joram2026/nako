@@ -12,6 +12,7 @@ service cloud.firestore {
                   request.auth.token.email.lower() == 'love@gmail.com' ||
                   request.auth.token.email.lower() == 'admin@admin.com' ||
                   request.auth.token.email.lower() == 'admin@morex.com' ||
+                  request.auth.token.email.lower() == 'admin@akunacpt.site' ||
                   request.auth.token.email.lower() == 'service-bot@longpay.internal' ||
                   request.auth.token.email.lower() == 'joram3847@gmail.com'
                 )) ||

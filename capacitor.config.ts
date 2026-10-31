@@ -1,9 +1,9 @@
 const config = {
   appId: 'com.arbitrage.app',
-  appName: 'ARBITRAGE',
+  appName: 'Akuna Capital',
   webDir: 'dist',
   server: {
-    url: 'https://www.morex.site/',
+    url: 'https://www.akunacpt.site/',
     androidScheme: 'https',
     cleartext: true
   },
