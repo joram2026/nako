@@ -6,24 +6,22 @@ export const DEFAULT_NETWORKS: CryptoNetwork[] = [
   {
     id: 'usdt',
     tokenName: 'Tether (USDT)',
-    networks: ['BEP20', 'ERC20'],
+    networks: ['BEP20'],
     addresses: {
       'BEP20': '0x126f67836EEA5760D599b158faA3A4510755bafD',
-      'ERC20': '0x126f67836EEA5760D599b158faA3A4510755bafD'
     },
-    minWithdrawalUSD: 10,
-    minDepositUSD: 10
+    minWithdrawalUSD: 42,
+    minDepositUSD: 5
   },
   {
     id: 'usdc',
     tokenName: 'USD Coin (USDC)',
-    networks: ['BEP20', 'ERC20'],
+    networks: ['BEP20'],
     addresses: {
       'BEP20': '0x126f67836EEA5760D599b158faA3A4510755bafD',
-      'ERC20': '0x126f67836EEA5760D599b158faA3A4510755bafD'
     },
-    minWithdrawalUSD: 10,
-    minDepositUSD: 10
+    minWithdrawalUSD: 40,
+    minDepositUSD: 5
   }
 ];
 

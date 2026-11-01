@@ -199,19 +199,19 @@ export default function App() {
 
   if (initializing) {
     return (
-      <div id="app-loading-screen" className="min-h-screen bg-[#091420] flex flex-col items-center justify-center gap-4 text-white font-sans">
-        <div className="relative w-20 h-20 rounded-3xl bg-[#0f1f2e] border border-emerald-500/30 p-2.5 flex items-center justify-center overflow-hidden animate-logo-pulse mb-1">
+      <div id="app-loading-screen" className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center gap-4 text-slate-900 font-sans">
+        <div className="relative w-20 h-20 rounded-3xl bg-white border border-slate-200/90 p-3.5 flex items-center justify-center shadow-lg shadow-emerald-500/10 animate-logo-pulse mb-1">
           <img 
             src="/icon.svg" 
             alt="Akuna Capital" 
             className="w-full h-full object-contain"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-emerald-500/10 to-transparent pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-emerald-500/5 to-transparent pointer-events-none rounded-3xl"></div>
         </div>
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="w-6 h-6 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs text-slate-400 font-bold tracking-wide animate-text-blink">Connecting to Akuna Capital Trading Engine...</p>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-3 border-slate-200 border-t-emerald-500 rounded-full animate-spin"></div>
+          <p className="text-xs text-slate-500 font-semibold tracking-wide animate-text-blink">Connecting to Akuna Capital Trading Engine...</p>
         </div>
       </div>
     );
@@ -315,7 +315,7 @@ export default function App() {
           user={user}
           initialCoinSymbol={depositCoin}
           onBack={() => navigate('/dashboard')}
-          onSuccess={() => handleTxSuccess('Deposit submitted successfully')}
+          onSuccess={() => navigate('/wallet')}
         />
       )}
 

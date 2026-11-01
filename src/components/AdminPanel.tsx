@@ -6,7 +6,7 @@ import {
   collection, doc, getDocs, updateDoc, deleteDoc, runTransaction, 
   setDoc, query, orderBy, serverTimestamp, writeBatch, getDoc, Timestamp, addDoc 
 } from 'firebase/firestore';
-import { UserAccount, Transaction, TransactionStatus, TransactionType, CryptoNetwork, P2PMerchant, CryptoPrice, ArbitrageConfig, BotTemplate, DepositBonusTier, ReferralDepositConfig, CopyTraderLead, PromoCode, PromoCodeRewardType, WithdrawalConfig } from '../types';
+import { UserAccount, Transaction, TransactionStatus, TransactionType, CryptoNetwork, P2PMerchant, CryptoPrice, ArbitrageConfig, BotTemplate, DepositBonusTier, ReferralDepositConfig, CopyTraderLead, PromoCode, PromoCodeRewardType, WithdrawalConfig, SlideshowBanner } from '../types';
 import { DEFAULT_COPY_LEADS, getLeadDailyProfitRange } from '../data/copyTraders';
 import { DEFAULT_NETWORKS } from '../seedData';
 import { fetchLivePriceFromBinance, fetchAllLivePrices, syncLiveCryptoPrices } from '../utils/cryptoApi';
@@ -15,7 +15,7 @@ import { ExpertAvatar } from './ExpertAvatar';
 import { 
   Users, CheckCircle2, XCircle, Settings, ShieldAlert, Key, 
   Trash2, ToggleLeft, ToggleRight, Loader, ZoomIn, Plus, Edit, Check, Eye, Star, Mail, RefreshCw, X, FileText, Coins, TrendingUp, Bot, Cpu, Smartphone, Phone, Sparkles, ChevronDown, ChevronUp,
-  Search, Award, Flame, UserCheck, Tag, Gift, Copy, Percent, ArrowDownToLine, Calendar, DollarSign, Save
+  Search, Award, Flame, UserCheck, Tag, Gift, Copy, Percent, ArrowDownToLine, Calendar, DollarSign, Save, Image as ImageIcon, ArrowUp, ArrowDown, ExternalLink
 } from 'lucide-react';
 
 const STATIC_CRYPTO: Record<string, { name: string; price: number }> = {
@@ -193,6 +193,22 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   });
   const [isSavingWithdrawalConfig, setIsSavingWithdrawalConfig] = useState(false);
   const [previewWithdrawalAmount, setPreviewWithdrawalAmount] = useState<number>(100);
+
+  // Slideshow Banners State
+  const [slideshowBanners, setSlideshowBanners] = useState<SlideshowBanner[]>([]);
+  const [isSavingBanners, setIsSavingBanners] = useState(false);
+  const [newBannerForm, setNewBannerForm] = useState<{
+    imageUrl: string;
+    title: string;
+    actionType: 'none' | 'deposit' | 'trade' | 'earn' | 'link';
+    linkUrl: string;
+  }>({
+    imageUrl: '',
+    title: '',
+    actionType: 'none',
+    linkUrl: ''
+  });
+  const [bannerUploadError, setBannerUploadError] = useState<string | null>(null);
 
   // Vouchers & Promo Codes Management States
   const [promoCodesList, setPromoCodesList] = useState<PromoCode[]>([]);
@@ -520,6 +536,20 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         };
         await setDoc(withDocRef, defaultWithConfig);
         setWithdrawalConfig(defaultWithConfig);
+      }
+
+      // Fetch Slideshow Banners Config Settings
+      try {
+        const bannerDocRef = doc(db, 'settings', 'slideshow_banners');
+        const bannerDocSnap = await getDoc(bannerDocRef);
+        if (bannerDocSnap.exists()) {
+          const bannerData = bannerDocSnap.data();
+          if (Array.isArray(bannerData.banners)) {
+            setSlideshowBanners(bannerData.banners);
+          }
+        }
+      } catch (err) {
+        console.warn('Error fetching slideshow banners:', err);
       }
 
       // Fetch Bot Templates
@@ -2355,6 +2385,139 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         showFeedback('error', 'Error syncing live market prices: ' + err.message);
       }
     }
+  };
+
+  // Slideshow Banners Handlers
+  const handleSaveSlideshowBanners = async (updatedBanners: SlideshowBanner[]) => {
+    setIsSavingBanners(true);
+    try {
+      // Clean and sanitize all objects to guarantee NO undefined properties exist
+      const cleanBanners = updatedBanners.map((b, idx) => {
+        const item: Record<string, any> = {
+          id: b.id || `banner-${Date.now()}-${idx}`,
+          imageUrl: b.imageUrl || '',
+          order: typeof b.order === 'number' ? b.order : idx + 1,
+          active: b.active !== false,
+          actionType: b.actionType || 'none'
+        };
+        if (b.title && typeof b.title === 'string' && b.title.trim()) {
+          item.title = b.title.trim();
+        }
+        if (b.linkUrl && typeof b.linkUrl === 'string' && b.linkUrl.trim()) {
+          item.linkUrl = b.linkUrl.trim();
+        }
+        return item;
+      });
+
+      const bannerDocRef = doc(db, 'settings', 'slideshow_banners');
+      await setDoc(bannerDocRef, {
+        banners: cleanBanners,
+        updatedAt: new Date().toISOString()
+      });
+      setSlideshowBanners(cleanBanners as SlideshowBanner[]);
+      showFeedback('success', 'Slideshow banners successfully updated!');
+    } catch (err: any) {
+      console.error(err);
+      showFeedback('error', 'Failed to save slideshow banners: ' + err.message);
+    } finally {
+      setIsSavingBanners(false);
+    }
+  };
+
+  const handleAddBannerSlide = async () => {
+    if (!newBannerForm.imageUrl.trim()) {
+      alert('Please provide or upload a banner image.');
+      return;
+    }
+    const newSlide: SlideshowBanner = {
+      id: 'banner-' + Date.now(),
+      imageUrl: newBannerForm.imageUrl.trim(),
+      actionType: newBannerForm.actionType || 'none',
+      order: slideshowBanners.length + 1,
+      active: true
+    };
+    if (newBannerForm.title.trim()) {
+      newSlide.title = newBannerForm.title.trim();
+    }
+    if (newBannerForm.linkUrl.trim()) {
+      newSlide.linkUrl = newBannerForm.linkUrl.trim();
+    }
+    const updated = [...slideshowBanners, newSlide];
+    await handleSaveSlideshowBanners(updated);
+    setNewBannerForm({
+      imageUrl: '',
+      title: '',
+      actionType: 'none',
+      linkUrl: ''
+    });
+    setBannerUploadError(null);
+  };
+
+  const handleBannerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBannerUploadError(null);
+
+    if (file.size > 8 * 1024 * 1024) {
+      setBannerUploadError('File is too large. Please select an image under 8MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (!dataUrl) return;
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          setNewBannerForm(prev => ({ ...prev, imageUrl: compressedDataUrl }));
+        } else {
+          setNewBannerForm(prev => ({ ...prev, imageUrl: dataUrl }));
+        }
+      };
+      img.onerror = () => {
+        setNewBannerForm(prev => ({ ...prev, imageUrl: dataUrl }));
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleToggleBannerActive = async (index: number) => {
+    const updated = [...slideshowBanners];
+    updated[index] = { ...updated[index], active: updated[index].active === false ? true : false };
+    await handleSaveSlideshowBanners(updated);
+  };
+
+  const handleDeleteBanner = async (index: number) => {
+    const updated = slideshowBanners.filter((_, i) => i !== index);
+    await handleSaveSlideshowBanners(updated);
+  };
+
+  const handleMoveBanner = async (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= slideshowBanners.length) return;
+    const updated = [...slideshowBanners];
+    const temp = updated[index];
+    updated[index] = updated[targetIndex];
+    updated[targetIndex] = temp;
+    await handleSaveSlideshowBanners(updated);
   };
 
   // Filter Transactions
@@ -5312,6 +5475,245 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                       );
                     })()}
                   </div>
+                </div>
+              </div>
+
+              {/* 7. Home Slideshow Banners Manager */}
+              <div id="slideshow-banners-admin" className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="text-emerald-400" size={18} />
+                    <div>
+                      <h3 className="text-xs font-black text-zinc-300 uppercase tracking-wider">
+                        Home Slideshow Banners ({slideshowBanners.length})
+                      </h3>
+                      <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">
+                        Upload custom image banners for the home tab slideshow. Pure full-bleed images are displayed without clunky text overlays.
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full font-bold">
+                      Real-Time Synced
+                    </span>
+                  </div>
+                </div>
+
+                {/* Upload / Add New Banner Form */}
+                <div className="bg-zinc-950/60 p-4 rounded-2xl border border-zinc-850 space-y-3">
+                  <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+                    <Plus size={13} className="text-emerald-400" />
+                    <span>Upload or Add New Banner Slide</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* File Upload / Image Picker */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] text-zinc-400 font-bold block">1. Upload Image from Device</label>
+                      <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-zinc-800 hover:border-emerald-500/60 rounded-xl cursor-pointer bg-zinc-900/60 hover:bg-zinc-900 transition-all text-center">
+                        <ImageIcon size={22} className="text-zinc-500 mb-1" />
+                        <span className="text-xs font-bold text-zinc-300">Click to Select Banner Image</span>
+                        <span className="text-[10px] text-zinc-500 mt-0.5">PNG, JPG, WebP, SVG (Recommended ratio 21:9 or 16:7)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleBannerFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      {bannerUploadError && (
+                        <p className="text-[10px] text-rose-400 font-medium">{bannerUploadError}</p>
+                      )}
+                    </div>
+
+                    {/* Or Image URL & Details */}
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-zinc-400 font-bold block">Or Paste Direct Image URL</label>
+                        <input
+                          type="text"
+                          placeholder="https://... or /assets/..."
+                          value={newBannerForm.imageUrl}
+                          onChange={(e) => setNewBannerForm({ ...newBannerForm, imageUrl: e.target.value })}
+                          className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-zinc-400 font-bold block">Banner Title (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Special Bonus"
+                            value={newBannerForm.title}
+                            onChange={(e) => setNewBannerForm({ ...newBannerForm, title: e.target.value })}
+                            className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-zinc-400 font-bold block">Click Action</label>
+                          <select
+                            value={newBannerForm.actionType}
+                            onChange={(e) => setNewBannerForm({ ...newBannerForm, actionType: e.target.value as any })}
+                            className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          >
+                            <option value="none">None (Display Only)</option>
+                            <option value="deposit">Open Deposit Modal</option>
+                            <option value="trade">Switch to Trade Hub</option>
+                            <option value="earn">Switch to Earn Hub</option>
+                            <option value="link">Open External Link</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {newBannerForm.actionType === 'link' && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-zinc-400 font-bold block">Target URL</label>
+                          <input
+                            type="text"
+                            placeholder="https://..."
+                            value={newBannerForm.linkUrl}
+                            onChange={(e) => setNewBannerForm({ ...newBannerForm, linkUrl: e.target.value })}
+                            className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Image Preview Box if image is ready */}
+                  {newBannerForm.imageUrl && (
+                    <div className="pt-2 flex items-center justify-between border-t border-zinc-900">
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 h-11 rounded-lg overflow-hidden border border-zinc-700 bg-black shrink-0">
+                          <img src={newBannerForm.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-[10px] text-emerald-400 font-bold">Image loaded and ready to publish!</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddBannerSlide}
+                        disabled={isSavingBanners}
+                        className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {isSavingBanners ? <Loader size={12} className="animate-spin" /> : <Plus size={13} />}
+                        <span>Publish Banner to Slideshow</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Existing Banners List */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-zinc-300">Active Slideshow Items ({slideshowBanners.length})</span>
+                    {slideshowBanners.length > 0 && (
+                      <span className="text-[10px] text-zinc-500 font-mono">Drag or use arrows to reorder</span>
+                    )}
+                  </div>
+
+                  {slideshowBanners.length === 0 ? (
+                    <div className="p-6 text-center bg-zinc-950/40 rounded-2xl border border-zinc-850 space-y-1.5">
+                      <ImageIcon size={24} className="text-zinc-600 mx-auto" />
+                      <p className="text-xs text-zinc-400 font-bold">No custom banners published yet</p>
+                      <p className="text-[10px] text-zinc-500">
+                        Upload images above or upload them in conversation to replace the default slides.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {slideshowBanners.map((banner, idx) => (
+                        <div 
+                          key={banner.id || idx}
+                          className={`p-3 rounded-2xl border transition-all flex flex-col justify-between space-y-2.5 ${
+                            banner.active === false 
+                              ? 'bg-zinc-950/40 border-zinc-850 opacity-60' 
+                              : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
+                          }`}
+                        >
+                          {/* Banner Image Preview */}
+                          <div className="relative aspect-[21/9] rounded-xl overflow-hidden border border-zinc-800 bg-black">
+                            <img 
+                              src={banner.imageUrl} 
+                              alt={banner.title || `Slide ${idx + 1}`} 
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[9px] font-mono font-bold text-white">
+                              #{idx + 1}
+                            </div>
+                            <div className="absolute top-1.5 right-1.5">
+                              <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase font-mono ${
+                                banner.active === false ? 'bg-zinc-800 text-zinc-400' : 'bg-emerald-500/80 text-white'
+                              }`}>
+                                {banner.active === false ? 'Paused' : 'Active'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Info & Actions */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <span className="text-xs font-bold text-zinc-200 block truncate">
+                                {banner.title || `Slide ${idx + 1}`}
+                              </span>
+                              <span className="text-[10px] text-zinc-500 font-mono block truncate">
+                                Action: {banner.actionType || 'none'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              {/* Move Up */}
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveBanner(idx, 'up')}
+                                className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                                title="Move Earlier in Slideshow"
+                              >
+                                <ArrowUp size={12} />
+                              </button>
+
+                              {/* Move Down */}
+                              <button
+                                type="button"
+                                disabled={idx === slideshowBanners.length - 1}
+                                onClick={() => handleMoveBanner(idx, 'down')}
+                                className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                                title="Move Later in Slideshow"
+                              >
+                                <ArrowDown size={12} />
+                              </button>
+
+                              {/* Toggle Active */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleBannerActive(idx)}
+                                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                  banner.active === false 
+                                    ? 'bg-zinc-900 text-zinc-500 hover:text-zinc-300' 
+                                    : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+                                }`}
+                                title={banner.active === false ? "Activate Slide" : "Pause Slide"}
+                              >
+                                {banner.active === false ? <ToggleLeft size={14} /> : <ToggleRight size={14} />}
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteBanner(idx)}
+                                className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors cursor-pointer"
+                                title="Delete Slide"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

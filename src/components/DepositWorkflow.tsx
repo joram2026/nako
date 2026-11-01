@@ -375,21 +375,33 @@ export default function DepositWorkflow({
         const expiryMs = latestTx.expiresAtMs || (txCreatedMs + 20 * 60 * 1000);
 
         // If still within payment window and has paymentId
-        if (latestTx.nowpaymentsPaymentId && expiryMs > Date.now()) {
-          const restoredOrder: NowPaymentsActiveOrder = {
-            paymentId: latestTx.nowpaymentsPaymentId,
-            payAddress: latestTx.address || '',
-            payAmount: latestTx.payAmount || latestTx.coinAmount || latestTx.amount,
-            payCurrency: latestTx.coinSymbol || currentSymbol,
-            priceAmount: latestTx.priceAmount || latestTx.amount,
-            network: latestTx.network || 'Crypto',
-            paymentStatus: latestTx.gatewayStatus || 'waiting',
-            transactionId: latestTx.id
-          };
-          setActiveOrder(restoredOrder);
-          setExpiresAt(expiryMs);
-          setCreditedAmount(restoredOrder.priceAmount);
-          saveActiveOrderToStorage(restoredOrder, expiryMs);
+        if (latestTx.nowpaymentsPaymentId) {
+          if (expiryMs > Date.now()) {
+            const restoredOrder: NowPaymentsActiveOrder = {
+              paymentId: latestTx.nowpaymentsPaymentId,
+              payAddress: latestTx.address || '',
+              payAmount: latestTx.payAmount || latestTx.coinAmount || latestTx.amount,
+              payCurrency: latestTx.coinSymbol || currentSymbol,
+              priceAmount: latestTx.priceAmount || latestTx.amount,
+              network: latestTx.network || 'Crypto',
+              paymentStatus: latestTx.gatewayStatus || 'waiting',
+              transactionId: latestTx.id
+            };
+            setActiveOrder(restoredOrder);
+            setExpiresAt(expiryMs);
+            setCreditedAmount(restoredOrder.priceAmount);
+            saveActiveOrderToStorage(restoredOrder, expiryMs);
+          } else {
+            // Expired: automatically mark FAILED in Firestore
+            fetch('/api/nowpayments/mark-failed', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                paymentId: latestTx.nowpaymentsPaymentId,
+                reason: 'Payment duration expired with no funds detected.'
+              })
+            }).catch(() => {});
+          }
         }
       }
     }, () => {});
@@ -1166,10 +1178,16 @@ export default function DepositWorkflow({
 
                 <button
                   type="button"
-                  onClick={onSuccess}
+                  id="deposit-done-btn"
+                  onClick={() => {
+                    clearActiveOrderFromStorage();
+                    setActiveOrder(null);
+                    setStep('choose_network');
+                    onSuccess();
+                  }}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3.5 rounded-2xl shadow-md cursor-pointer transition-all"
                 >
-                  Done & View Wallet Balance
+                  Done & View Wallet
                 </button>
               </div>
             ) : (

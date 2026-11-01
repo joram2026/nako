@@ -555,7 +555,7 @@ export default function StandardUserDashboard({
   });
 
   // Track previous transaction statuses to detect live real-time approval transitions
-  const prevTxMapRef = useRef<Map<string, TransactionStatus>>(new Map());
+  const prevTxMapRef = useRef<Map<string, TransactionStatus | string>>(new Map());
   const isFirstTxLoadRef = useRef<boolean>(true);
 
   // Filter relevant notifications (Deposits, Withdrawals, P2P & Transferred Funds)
@@ -1522,7 +1522,7 @@ export default function StandardUserDashboard({
       isFirstTxLoadRef.current = false;
 
       // Update previous status tracking map
-      const nextMap = new Map<string, TransactionStatus>();
+      const nextMap = new Map<string, TransactionStatus | string>();
       txs.forEach(t => nextMap.set(t.id, t.status));
       prevTxMapRef.current = nextMap;
 
@@ -3080,142 +3080,109 @@ export default function StandardUserDashboard({
     return (
       <div 
         id="coin-detail-page-root" 
-        className={`min-h-screen font-sans pb-16 animate-fade-in ${
-          isLightTheme ? 'bg-[#FFF3D6] text-zinc-800' : 'bg-slate-900 text-zinc-100'
-        }`}
+        className="min-h-screen font-sans pb-20 bg-[#f8fafc] text-slate-900 animate-fadeIn"
       >
-        {/* Top Header */}
-        <header className={`px-4 py-4 border-b sticky top-0 backdrop-blur-md z-20 flex items-center gap-3 ${
-          isLightTheme ? 'bg-[#FFF3D6]/85 border-zinc-200/80' : 'bg-slate-900/85 border-slate-800'
-        }`}>
-          <button 
-            id="coin-detail-back-btn"
-            onClick={() => {
-              setSelectedCoin(null);
-              setHoveredCandle(null);
-            }}
-            className={`p-2.5 rounded-full transition-all cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95 ${
-              isLightTheme 
-                ? 'bg-[#FFF8E1] border border-amber-300/80 text-amber-600 hover:text-amber-700 hover:border-amber-400' 
-                : 'bg-slate-800 border border-slate-700 text-zinc-400 hover:text-white'
-            }`}
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border ${
-              isLightTheme ? 'bg-[#FFF8E1] border-amber-300/80' : 'bg-slate-800 border border-slate-700'
-            }`}>
-              <CoinIcon symbol={liveCoin.symbol} className="w-6 h-6" />
+        {/* Top Sticky Header */}
+        <header className="px-4 py-3.5 bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button 
+              id="coin-detail-back-btn"
+              onClick={() => {
+                setSelectedCoin(null);
+                setHoveredCandle(null);
+              }}
+              className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+              aria-label="Back"
+            >
+              <ArrowLeft size={17} strokeWidth={2.5} />
+            </button>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center p-1.5">
+                <CoinIcon symbol={liveCoin.symbol} className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
+                  <span>{liveCoin.name}</span>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                    {liveCoin.symbol}
+                  </span>
+                </h2>
+                <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">Live Trading Pair · USDT</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-black tracking-tight flex items-center gap-1.5">
-                <span className={isLightTheme ? 'text-zinc-800' : 'text-zinc-100'}>{liveCoin.name}</span>
-                <span className={`text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md ${
-                  isLightTheme 
-                    ? 'bg-amber-100 text-amber-800 border border-amber-200' 
-                    : 'bg-emerald-950/80 text-emerald-400 border border-emerald-900/50'
-                }`}>
-                  {liveCoin.symbol}
-                </span>
-              </h2>
-              <p className="text-[9px] text-zinc-500 font-extrabold tracking-widest uppercase mt-0.5 select-none">REAL-TIME TRADING PAIR</p>
-            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[10px] font-bold font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Real-Time Feed</span>
           </div>
         </header>
 
-        <main className="max-w-md mx-auto px-4 mt-5 space-y-5">
-          {/* Price Display */}
-          <div className={`flex justify-between items-center select-none p-4 rounded-2xl border ${
-            isLightTheme 
-              ? 'bg-[#FFF8E1] border-amber-300/90 shadow-[0_0_10px_rgba(245,158,11,0.08)]' 
-              : 'bg-slate-950/40 border-slate-850'
-          }`}>
+        <main className="max-w-md mx-auto px-4 mt-4 space-y-4">
+          {/* Price Display Card */}
+          <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex justify-between items-center select-none">
             <div>
-              <span className="text-[9px] text-zinc-500 font-extrabold uppercase tracking-widest block">LAST TRADED PRICE</span>
-              <h3 className={`text-3xl font-black font-mono tracking-tight mt-1 flex items-baseline gap-1 ${
-                isLightTheme ? 'text-zinc-800' : 'text-zinc-100'
-              }`}>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">LAST TRADED PRICE</span>
+              <h3 className="text-3xl font-black font-mono tracking-tight text-slate-900 mt-1 flex items-baseline gap-1.5">
                 <span>${liveCoin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</span>
-                <span className="text-xs text-zinc-500 font-bold uppercase font-mono">USDT</span>
+                <span className="text-xs text-slate-400 font-bold uppercase font-mono">USDT</span>
               </h3>
             </div>
-            <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black ${
-              liveCoin.change24h >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+            <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold font-mono ${
+              liveCoin.change24h >= 0 
+                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
+                : 'bg-rose-50 text-rose-600 border border-rose-200'
             }`}>
-              {liveCoin.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+              {liveCoin.change24h >= 0 ? <TrendingUp size={14} strokeWidth={2.5} /> : <TrendingDown size={14} strokeWidth={2.5} />}
               <span>{liveCoin.change24h >= 0 ? '+' : ''}{liveCoin.change24h.toFixed(2)}%</span>
             </div>
           </div>
 
           {/* Candlestick OHLC Stat Header */}
-          <div className={`grid grid-cols-4 gap-1.5 p-2.5 border rounded-xl select-none text-center ${
-            isLightTheme 
-              ? 'bg-[#FFF8E1] border-amber-300/90 shadow-[0_0_10px_rgba(245,158,11,0.08)]' 
-              : 'bg-slate-950 border-slate-850'
-          }`}>
-            <div className={`p-1.5 rounded-lg border ${
-              isLightTheme ? 'bg-[#FFF8E1]/80 border-amber-200/60' : 'bg-slate-900/40 border-slate-850/50'
-            }`}>
-              <span className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-wider block">Open</span>
-              <span className={`text-[10px] font-mono font-bold block mt-0.5 leading-none ${displayedCandle.close >= displayedCandle.open ? "text-emerald-400" : "text-red-400"}`}>
-                ${displayedCandle.open.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+          <div className="grid grid-cols-4 gap-2 select-none text-center">
+            <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs">
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Open</span>
+              <span className={`text-[11px] font-mono font-bold block mt-0.5 leading-none ${displayedCandle.close >= displayedCandle.open ? "text-emerald-600" : "text-rose-600"}`}>
+                ${displayedCandle.open.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <div className={`p-1.5 rounded-lg border ${
-              isLightTheme ? 'bg-[#FFF8E1]/80 border-amber-200/60' : 'bg-slate-900/40 border-slate-850/50'
-            }`}>
-              <span className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-wider block">High</span>
-              <span className={`text-[10px] font-mono font-bold block mt-0.5 leading-none ${
-                isLightTheme ? 'text-zinc-800' : 'text-zinc-200'
-              }`}>
-                ${displayedCandle.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+            <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs">
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">High</span>
+              <span className="text-[11px] font-mono font-bold block mt-0.5 leading-none text-slate-800">
+                ${displayedCandle.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <div className={`p-1.5 rounded-lg border ${
-              isLightTheme ? 'bg-[#FFF8E1]/80 border-amber-200/60' : 'bg-slate-900/40 border-slate-850/50'
-            }`}>
-              <span className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-wider block">Low</span>
-              <span className={`text-[10px] font-mono font-bold block mt-0.5 leading-none ${
-                isLightTheme ? 'text-zinc-800' : 'text-zinc-200'
-              }`}>
-                ${displayedCandle.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+            <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs">
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Low</span>
+              <span className="text-[11px] font-mono font-bold block mt-0.5 leading-none text-slate-800">
+                ${displayedCandle.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
-            <div className={`p-1.5 rounded-lg border ${
-              isLightTheme ? 'bg-[#FFF8E1]/80 border-amber-200/60' : 'bg-slate-900/40 border-slate-850/50'
-            }`}>
-              <span className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-wider block">Close</span>
-              <span className={`text-[10px] font-mono font-bold block mt-0.5 leading-none ${displayedCandle.close >= displayedCandle.open ? "text-emerald-400" : "text-red-400"}`}>
-                ${displayedCandle.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+            <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs">
+              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Close</span>
+              <span className={`text-[11px] font-mono font-bold block mt-0.5 leading-none ${displayedCandle.close >= displayedCandle.open ? "text-emerald-600" : "text-rose-600"}`}>
+                ${displayedCandle.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           </div>
 
           {/* Vector Candlestick Chart */}
-          <div className={`p-4 border rounded-2xl space-y-4 relative overflow-hidden ${
-            isLightTheme 
-              ? 'bg-[#FFF8E1] border-amber-300/90 shadow-[0_0_10px_rgba(245,158,11,0.08)]' 
-              : 'bg-slate-950 border-slate-850'
-          }`}>
+          <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4 relative overflow-hidden">
             <div className="flex justify-between items-center select-none">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[10px] text-zinc-400 font-black uppercase tracking-wider">Live Candlestick Trend</span>
+                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Live Candlestick Trend</span>
               </div>
               
               {/* Timeframe selector tabs */}
-              <div className={`flex gap-1 p-0.5 rounded-lg border ${
-                isLightTheme ? 'bg-[#FFF8E1]/80 border-amber-200' : 'bg-slate-900 border-slate-800'
-              }`}>
+              <div className="flex gap-1 p-0.5 rounded-xl bg-slate-100 border border-slate-200/80">
                 {(['1m', '5m', '1h', '4h'] as const).map(tf => (
                   <button
                     key={tf}
                     onClick={() => setChartTimeframe(tf)}
-                    className={`px-2 py-0.5 text-[9px] font-extrabold rounded-md transition-all uppercase cursor-pointer ${
+                    className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all uppercase cursor-pointer ${
                       chartTimeframe === tf 
-                        ? (isLightTheme ? 'bg-amber-100 text-amber-800 shadow-xs border border-amber-200' : 'bg-slate-850 text-emerald-400 shadow-sm border border-slate-700/50') 
-                        : (isLightTheme ? 'text-zinc-500 hover:text-zinc-700' : 'text-zinc-500 hover:text-zinc-300')
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200/60 font-black' 
+                        : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
                     {tf}
@@ -3228,19 +3195,19 @@ export default function StandardUserDashboard({
             <div className="w-full h-[200px] relative">
               <svg viewBox="0 0 350 200" className="w-full h-full overflow-visible">
                 {/* Horizontal Grid lines */}
-                <line x1="0" y1="25" x2="350" y2="25" stroke={isLightTheme ? "#fcd34d" : "#1e293b"} strokeOpacity={isLightTheme ? "0.35" : "0.5"} strokeDasharray="3 3" />
-                <line x1="0" y1="100" x2="350" y2="100" stroke={isLightTheme ? "#fcd34d" : "#1e293b"} strokeOpacity={isLightTheme ? "0.35" : "0.5"} strokeDasharray="3 3" />
-                <line x1="0" y1="175" x2="350" y2="175" stroke={isLightTheme ? "#fcd34d" : "#1e293b"} strokeOpacity={isLightTheme ? "0.35" : "0.5"} strokeDasharray="3 3" />
+                <line x1="0" y1="25" x2="350" y2="25" stroke="#f1f5f9" strokeDasharray="3 3" />
+                <line x1="0" y1="100" x2="350" y2="100" stroke="#f1f5f9" strokeDasharray="3 3" />
+                <line x1="0" y1="175" x2="350" y2="175" stroke="#f1f5f9" strokeDasharray="3 3" />
 
                 {/* SVG Definitions for Gradients & Glow Filters */}
                 <defs>
                   <linearGradient id="upCandleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#047857" />
+                    <stop offset="100%" stopColor="#059669" />
                   </linearGradient>
                   <linearGradient id="downCandleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ef4444" />
-                    <stop offset="100%" stopColor="#b91c1c" />
+                    <stop offset="0%" stopColor="#f43f5e" />
+                    <stop offset="100%" stopColor="#be123c" />
                   </linearGradient>
                   <filter id="activeGlow" x="-20%" y="-20%" width="140%" height="140%">
                     <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -3249,20 +3216,20 @@ export default function StandardUserDashboard({
                 </defs>
 
                 {/* Horizontal Grid lines with price labels */}
-                <g opacity="0.6">
-                  <line x1="0" y1="25" x2="305" y2="25" stroke={isLightTheme ? "#d97706" : "#334155"} strokeOpacity={isLightTheme ? "0.2" : "0.35"} strokeDasharray="3 3" />
-                  <text x="310" y="28" fill={isLightTheme ? "#b45309" : "#64748b"} fontSize="7" fontFamily="monospace" fontWeight="bold">
-                    ${(min + ((200 - 25 - 25) / 145) * range).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 3 })}
+                <g opacity="0.7">
+                  <line x1="0" y1="25" x2="305" y2="25" stroke="#e2e8f0" strokeDasharray="3 3" />
+                  <text x="310" y="28" fill="#94a3b8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">
+                    ${(min + ((200 - 25 - 25) / 145) * range).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </text>
 
-                  <line x1="0" y1="100" x2="305" y2="100" stroke={isLightTheme ? "#d97706" : "#334155"} strokeOpacity={isLightTheme ? "0.2" : "0.35"} strokeDasharray="3 3" />
-                  <text x="310" y="103" fill={isLightTheme ? "#b45309" : "#64748b"} fontSize="7" fontFamily="monospace" fontWeight="bold">
-                    ${(min + ((200 - 100 - 25) / 145) * range).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 3 })}
+                  <line x1="0" y1="100" x2="305" y2="100" stroke="#e2e8f0" strokeDasharray="3 3" />
+                  <text x="310" y="103" fill="#94a3b8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">
+                    ${(min + ((200 - 100 - 25) / 145) * range).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </text>
 
-                  <line x1="0" y1="175" x2="305" y2="175" stroke={isLightTheme ? "#d97706" : "#334155"} strokeOpacity={isLightTheme ? "0.2" : "0.35"} strokeDasharray="3 3" />
-                  <text x="310" y="178" fill={isLightTheme ? "#b45309" : "#64748b"} fontSize="7" fontFamily="monospace" fontWeight="bold">
-                    ${(min + ((200 - 175 - 25) / 145) * range).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 3 })}
+                  <line x1="0" y1="175" x2="305" y2="175" stroke="#e2e8f0" strokeDasharray="3 3" />
+                  <text x="310" y="178" fill="#94a3b8" fontSize="7.5" fontFamily="monospace" fontWeight="bold">
+                    ${(min + ((200 - 175 - 25) / 145) * range).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </text>
                 </g>
 
@@ -3273,8 +3240,8 @@ export default function StandardUserDashboard({
                     y1="10"
                     x2={15 + (candles.indexOf(hoveredCandle) / (candles.length - 1)) * 290}
                     y2="190"
-                    stroke="#475569"
-                    strokeOpacity="0.7"
+                    stroke="#94a3b8"
+                    strokeOpacity="0.8"
                     strokeWidth="1"
                     strokeDasharray="2 2"
                     pointerEvents="none"
@@ -3288,21 +3255,21 @@ export default function StandardUserDashboard({
                     y1={getY(hoveredCandle.close)}
                     x2="305"
                     y2={getY(hoveredCandle.close)}
-                    stroke="#475569"
-                    strokeOpacity="0.5"
+                    stroke="#94a3b8"
+                    strokeOpacity="0.8"
                     strokeWidth="1"
                     strokeDasharray="2 2"
                     pointerEvents="none"
                   />
                 )}
 
-                {/* Live Real-time Price Horizontal Indicator Line (The requested Price Line) */}
+                {/* Live Real-time Price Horizontal Indicator Line */}
                 <line
                   x1="0"
                   y1={getY(liveCoin.price)}
                   x2="305"
                   y2={getY(liveCoin.price)}
-                  stroke={liveCoin.change24h >= 0 ? "rgba(16, 185, 129, 0.65)" : "rgba(239, 68, 68, 0.65)"}
+                  stroke={liveCoin.change24h >= 0 ? "rgba(16, 185, 129, 0.7)" : "rgba(244, 63, 94, 0.7)"}
                   strokeWidth="1.25"
                   strokeDasharray="3 3"
                   className="animate-pulse"
@@ -3314,15 +3281,15 @@ export default function StandardUserDashboard({
                   cx="305"
                   cy={getY(liveCoin.price)}
                   r="4"
-                  fill={liveCoin.change24h >= 0 ? "#10b981" : "#ef4444"}
+                  fill={liveCoin.change24h >= 0 ? "#10b981" : "#f43f5e"}
                   className="animate-ping"
                   pointerEvents="none"
                 />
                 <circle
                   cx="305"
                   cy={getY(liveCoin.price)}
-                  r="2"
-                  fill={liveCoin.change24h >= 0 ? "#34d399" : "#f87171"}
+                  r="2.5"
+                  fill={liveCoin.change24h >= 0 ? "#10b981" : "#f43f5e"}
                   pointerEvents="none"
                 />
 
@@ -3337,7 +3304,6 @@ export default function StandardUserDashboard({
                   const bodyWidth = 8;
                   const isActive = i === candles.length - 1;
 
-                  // Volume bar height simulation
                   const volHeight = 10 + (Math.sin(i * 1.5) + 1.2) * 6;
                   const volY = 198 - volHeight;
 
@@ -3354,9 +3320,9 @@ export default function StandardUserDashboard({
                         y={volY}
                         width={bodyWidth}
                         height={volHeight}
-                        fill={isUp ? "#10b981" : "#ef4444"}
+                        fill={isUp ? "#10b981" : "#f43f5e"}
                         fillOpacity={isUp ? 0.2 : 0.25}
-                        className="hover:fill-opacity-40 transition-all duration-150"
+                        className="hover:fill-opacity-50 transition-all duration-150"
                         rx="1"
                       />
 
@@ -3366,9 +3332,9 @@ export default function StandardUserDashboard({
                         y1={yHigh}
                         x2={cx}
                         y2={yLow}
-                        stroke={isUp ? "#10b981" : "#ef4444"}
+                        stroke={isUp ? "#10b981" : "#f43f5e"}
                         strokeWidth="1.5"
-                        className="group-hover/candle:stroke-white transition-colors"
+                        className="group-hover/candle:stroke-slate-900 transition-colors"
                       />
 
                       {/* Candle body rect */}
@@ -3378,11 +3344,11 @@ export default function StandardUserDashboard({
                         width={bodyWidth}
                         height={Math.max(2.5, Math.abs(yOpen - yClose))}
                         fill={isUp ? "url(#upCandleGrad)" : "url(#downCandleGrad)"}
-                        stroke={isUp ? "#059669" : "#b91c1c"}
+                        stroke={isUp ? "#059669" : "#be123c"}
                         strokeWidth="0.75"
                         rx="1.5"
                         filter={isActive ? "url(#activeGlow)" : undefined}
-                        className={`transition-all duration-150 group-hover/candle:stroke-white group-hover/candle:brightness-110 ${isActive ? 'animate-pulse' : ''}`}
+                        className={`transition-all duration-150 ${isActive ? 'animate-pulse' : ''}`}
                       />
 
                       {/* Hover capture block */}
@@ -3403,72 +3369,59 @@ export default function StandardUserDashboard({
                   const cx = 15 + (hIndex / (candles.length - 1)) * 290;
                   const isLeftHalf = hIndex < candles.length / 2;
                   
-                  // Position tooltip box horizontally. If left half, show on right; if right half, show on left.
                   const tx = isLeftHalf ? cx + 12 : cx - 127;
-                  
-                  // Position tooltip box vertically, bounding it within safe limits of the SVG canvas height.
                   const cy = getY(hoveredCandle.close);
                   const ty = Math.max(10, Math.min(105, cy - 42));
-                  
                   const isUp = hoveredCandle.close >= hoveredCandle.open;
                   
                   return (
                     <g transform={`translate(${tx}, ${ty})`} pointerEvents="none" className="transition-all duration-75">
-                      {/* Tooltip Background Card with rounded corners, backdrop feel, and color-coded indicator border */}
                       <rect 
                         width="115" 
                         height="84" 
-                        rx="8" 
-                        fill="#090d16" 
-                        fillOpacity="0.96" 
-                        stroke={isUp ? "#10b981" : "#ef4444"} 
-                        strokeWidth="1.25" 
+                        rx="10" 
+                        fill="#0f172a" 
+                        fillOpacity="0.95" 
+                        stroke={isUp ? "#10b981" : "#f43f5e"} 
+                        strokeWidth="1.2" 
                       />
                       
-                      {/* Header text */}
-                      <text x="8" y="14" fill="#64748b" fontSize="7" fontWeight="900" fontFamily="monospace" letterSpacing="0.5">
-                        CANDLE DETAILS
+                      <text x="8" y="14" fill="#94a3b8" fontSize="7" fontWeight="bold" fontFamily="monospace">
+                        CANDLE STATS
                       </text>
-                      <text x="107" y="14" fill={isUp ? "#34d399" : "#f87171"} fontSize="7" fontWeight="900" fontFamily="monospace" textAnchor="end">
+                      <text x="107" y="14" fill={isUp ? "#34d399" : "#fb7185"} fontSize="7" fontWeight="900" fontFamily="monospace" textAnchor="end">
                         {isUp ? "▲ BULLISH" : "▼ BEARISH"}
                       </text>
                       
-                      {/* Divider */}
-                      <line x1="8" y1="18" x2="107" y2="18" stroke="#1e293b" strokeWidth="1" />
+                      <line x1="8" y1="18" x2="107" y2="18" stroke="#334155" strokeWidth="1" />
                       
-                      {/* Open Row */}
                       <text x="8" y="28" fill="#94a3b8" fontSize="7" fontFamily="monospace" fontWeight="bold">OPEN:</text>
-                      <text x="107" y="28" fill="#f1f5f9" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
-                        ${hoveredCandle.open.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      <text x="107" y="28" fill="#f8fafc" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
+                        ${hoveredCandle.open.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </text>
 
-                      {/* High Row */}
                       <text x="8" y="38" fill="#94a3b8" fontSize="7" fontFamily="monospace" fontWeight="bold">HIGH:</text>
                       <text x="107" y="38" fill="#34d399" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
-                        ${hoveredCandle.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                        ${hoveredCandle.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </text>
 
-                      {/* Low Row */}
                       <text x="8" y="48" fill="#94a3b8" fontSize="7" fontFamily="monospace" fontWeight="bold">LOW:</text>
-                      <text x="107" y="48" fill="#f87171" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
-                        ${hoveredCandle.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      <text x="107" y="48" fill="#fb7185" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
+                        ${hoveredCandle.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </text>
 
-                      {/* Close Row */}
                       <text x="8" y="58" fill="#94a3b8" fontSize="7" fontFamily="monospace" fontWeight="bold">CLOSE:</text>
-                      <text x="107" y="58" fill="#f1f5f9" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
-                        ${hoveredCandle.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      <text x="107" y="58" fill="#f8fafc" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
+                        ${hoveredCandle.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </text>
 
-                      {/* Actual Candle Time Row */}
                       <text x="8" y="68" fill="#94a3b8" fontSize="7" fontFamily="monospace" fontWeight="bold">TIME:</text>
-                      <text x="107" y="68" fill="#a7f3d0" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
+                      <text x="107" y="68" fill="#6ee7b7" fontSize="7" fontFamily="monospace" fontWeight="900" textAnchor="end">
                         {formatCandleTime(hoveredCandle.timestamp, chartTimeframe)}
                       </text>
 
-                      {/* Simulated Volume Row */}
-                      <text x="8" y="78" fill="#64748b" fontSize="6.5" fontFamily="monospace" fontWeight="bold">VOLUME:</text>
-                      <text x="107" y="78" fill="#94a3b8" fontSize="6.5" fontFamily="monospace" fontWeight="bold" textAnchor="end">
+                      <text x="8" y="78" fill="#64748b" fontSize="6.5" fontFamily="monospace" fontWeight="bold">VOL:</text>
+                      <text x="107" y="78" fill="#cbd5e1" fontSize="6.5" fontFamily="monospace" fontWeight="bold" textAnchor="end">
                         {(hoveredCandle.volume || 100).toFixed(0)}k USDT
                       </text>
                     </g>
@@ -3478,133 +3431,95 @@ export default function StandardUserDashboard({
 
               {/* Dynamic Floating Price Tag Bubble on right aligned with the live price line */}
               <div 
-                className="absolute text-[8px] font-mono font-bold select-none pointer-events-none transition-all duration-300 px-1.5 py-0.5 rounded shadow-lg flex items-center gap-1 border border-slate-700/50"
+                className="absolute text-[9px] font-mono font-bold select-none pointer-events-none transition-all duration-300 px-2 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5 border"
                 style={{ 
                   right: '44px',
                   top: `${getY(liveCoin.price)}px`, 
                   transform: 'translateY(-50%)',
-                  backgroundColor: liveCoin.change24h >= 0 ? 'rgba(6, 78, 59, 0.95)' : 'rgba(127, 29, 29, 0.95)',
-                  borderColor: liveCoin.change24h >= 0 ? '#10b981' : '#ef4444',
+                  backgroundColor: liveCoin.change24h >= 0 ? '#10b981' : '#f43f5e',
+                  borderColor: liveCoin.change24h >= 0 ? '#059669' : '#e11d48',
                   color: '#ffffff'
                 }}
               >
-                <span className="relative flex h-1 w-1">
+                <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1 w-1 bg-white"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
                 </span>
-                <span>${liveCoin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</span>
+                <span>${liveCoin.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
 
-              {/* Chart Labels */}
-              <div className={`absolute top-1 left-2 text-[9px] font-bold font-mono px-1.5 py-0.5 rounded border ${
-                isLightTheme 
-                  ? 'text-zinc-600 bg-[#FFF8E1] border-amber-300/80' 
-                  : 'text-zinc-500 bg-slate-950/80 border-slate-900'
-              }`}>
-                High: ${max.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {/* Chart Range Labels */}
+              <div className="absolute top-1 left-2 text-[10px] font-bold font-mono px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 shadow-xs">
+                H: ${max.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-              <div className={`absolute bottom-1 left-2 text-[9px] font-bold font-mono px-1.5 py-0.5 rounded border ${
-                isLightTheme 
-                  ? 'text-zinc-600 bg-[#FFF8E1] border-amber-300/80' 
-                  : 'text-zinc-500 bg-slate-950/80 border-slate-900'
-              }`}>
-                Low: ${min.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <div className="absolute bottom-1 left-2 text-[10px] font-bold font-mono px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 shadow-xs">
+                L: ${min.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
           </div>
 
           {/* High Fidelity Financial Statistics Grid Card */}
-          <div className="grid grid-cols-2 gap-2.5 select-none">
-            <div className={`p-3.5 rounded-2xl flex flex-col justify-between border ${
-              isLightTheme 
-                ? 'bg-[#FFF8E1] border-amber-300/90 shadow-[0_0_10px_rgba(245,158,11,0.08)]' 
-                : 'bg-slate-950/50 border-slate-850'
-            }`}>
-              <span className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-wider block">24h Volume</span>
-              <span className={`text-sm font-mono font-bold mt-1 block ${
-                isLightTheme ? 'text-zinc-800' : 'text-zinc-200'
-              }`}>
+          <div className="grid grid-cols-2 gap-3 select-none">
+            <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">24h Volume</span>
+              <span className="text-base font-mono font-black text-slate-900 mt-1 block">
                 {vol24h}
               </span>
             </div>
-            <div className={`p-3.5 rounded-2xl flex flex-col justify-between border ${
-              isLightTheme 
-                ? 'bg-[#FFF8E1] border-amber-300/90 shadow-[0_0_10px_rgba(245,158,11,0.08)]' 
-                : 'bg-slate-950/50 border-slate-850'
-            }`}>
-              <span className="text-[8px] text-zinc-500 font-extrabold uppercase tracking-wider block">Market Capitalization</span>
-              <span className={`text-sm font-mono font-bold mt-1 block ${
-                isLightTheme ? 'text-zinc-800' : 'text-zinc-200'
-              }`}>
+            <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Market Capitalization</span>
+              <span className="text-base font-mono font-black text-slate-900 mt-1 block">
                 {mcap24h}
               </span>
             </div>
           </div>
 
-          {/* Holding Information banner */}
-          <div className={`p-3.5 rounded-2xl flex justify-between items-center select-none border ${
-            isLightTheme 
-              ? 'bg-[#FFF8E1] border-amber-300/90 shadow-[0_0_10px_rgba(245,158,11,0.08)]' 
-              : 'bg-slate-850/60 border-slate-750'
-          }`}>
+          {/* Holding Information Banner */}
+          <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex justify-between items-center select-none">
             <div>
-              <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-wider block">Your Holdings</span>
-              <span className={`text-xs font-bold font-mono mt-0.5 block ${
-                isLightTheme ? 'text-zinc-700' : 'text-zinc-300'
-              }`}>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Your Holdings</span>
+              <span className="text-sm font-bold font-mono text-slate-800 mt-0.5 block">
                 {holding.toLocaleString(undefined, {
                   minimumFractionDigits: liveCoin.symbol === 'BTC' || liveCoin.symbol === 'ETH' ? 6 : 2,
                   maximumFractionDigits: liveCoin.symbol === 'BTC' || liveCoin.symbol === 'ETH' ? 8 : 4
                 })} {liveCoin.symbol}
                 {getLockedAmount(liveCoin.symbol) > 0 && (
-                  <span className="text-[9px] text-amber-600 block font-bold mt-1">
+                  <span className="text-[10px] text-amber-600 block font-semibold mt-0.5">
                     Available: {(holding - getLockedAmount(liveCoin.symbol)).toLocaleString(undefined, {
                       minimumFractionDigits: liveCoin.symbol === 'BTC' || liveCoin.symbol === 'ETH' ? 6 : 2,
                       maximumFractionDigits: liveCoin.symbol === 'BTC' || liveCoin.symbol === 'ETH' ? 8 : 4
-                    })} {liveCoin.symbol} (Contracted: {getLockedAmount(liveCoin.symbol).toLocaleString(undefined, {
-                      minimumFractionDigits: liveCoin.symbol === 'BTC' || liveCoin.symbol === 'ETH' ? 6 : 2,
-                      maximumFractionDigits: liveCoin.symbol === 'BTC' || liveCoin.symbol === 'ETH' ? 8 : 4
-                    })})
+                    })} (Contracted: {getLockedAmount(liveCoin.symbol)})
                   </span>
                 )}
               </span>
             </div>
             <div className="text-right">
-              <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-wider block">USDT VALUE</span>
-              <span className="text-xs text-emerald-400 font-black font-mono mt-0.5 block">${usdVal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">USDT VALUATION</span>
+              <span className="text-sm text-emerald-600 font-black font-mono mt-0.5 block">${usdVal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
 
           {/* BUY/SELL Interactive Form */}
-          <div className={`space-y-4 pt-5 border-t ${
-            isLightTheme ? 'border-amber-200/80' : 'border-slate-800'
-          }`}>
+          <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex justify-between items-center select-none">
-              <span className={`text-xs font-black uppercase tracking-wider ${
-                isLightTheme ? 'text-zinc-700' : 'text-zinc-300'
-              }`}>Trading Desk</span>
-              <span className="text-[10px] text-zinc-500 font-bold">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Instant Trading Desk</span>
+              <span className="text-[10px] text-slate-400 font-semibold font-mono">
                 Available: ${Math.max(0, getCoinHolding('USDT') - getLockedAmount('USDT')).toLocaleString(undefined, { minimumFractionDigits: 2 })} USDT
-                {getLockedAmount('USDT') > 0 && ` ($${getCoinHolding('USDT').toLocaleString(undefined, { minimumFractionDigits: 2 })} total)`}
               </span>
             </div>
 
             {/* BUY / SELL Switch tabs */}
-            <div className={`grid grid-cols-2 p-1 border rounded-xl gap-1 ${
-              isLightTheme ? 'bg-[#FFF8E1] border-amber-300/90 shadow-[0_0_10px_rgba(245,158,11,0.08)]' : 'bg-slate-950 border-slate-850'
-            }`}>
+            <div className="grid grid-cols-2 p-1 bg-slate-100 border border-slate-200/80 rounded-2xl gap-1">
               <button
                 type="button"
                 onClick={() => {
                   setQuickTradeType('BUY');
                   setTradeMessage(null);
                 }}
-                className={`py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                className={`py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
                   quickTradeType === 'BUY'
-                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10'
-                    : isLightTheme
-                      ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/50 hover:bg-emerald-100 hover:text-emerald-700'
-                      : 'bg-emerald-950/20 text-emerald-400 border border-emerald-900/10 hover:bg-emerald-900/20 hover:text-emerald-300'
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 font-semibold'
                 }`}
               >
                 BUY {liveCoin.symbol}
@@ -3615,12 +3530,10 @@ export default function StandardUserDashboard({
                   setQuickTradeType('SELL');
                   setTradeMessage(null);
                 }}
-                className={`py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                className={`py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
                   quickTradeType === 'SELL'
-                    ? 'bg-red-500 text-white shadow-md shadow-red-500/10'
-                    : isLightTheme
-                      ? 'bg-red-50 text-red-600 border border-red-200/50 hover:bg-red-100 hover:text-red-700'
-                      : 'bg-red-950/20 text-red-400 border border-red-900/10 hover:bg-red-900/20 hover:text-red-300'
+                    ? 'bg-rose-500 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 font-semibold'
                 }`}
               >
                 SELL {liveCoin.symbol}
@@ -3630,10 +3543,10 @@ export default function StandardUserDashboard({
             {/* Input field */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Order Size ({liveCoin.symbol})</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Order Size ({liveCoin.symbol})</label>
                 
                 {/* Percent shortcuts */}
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   {([25, 50, 75, 100] as const).map(pct => (
                     <button
                       key={pct}
@@ -3651,11 +3564,7 @@ export default function StandardUserDashboard({
                         }
                         setTradeMessage(null);
                       }}
-                      className={`px-1.5 py-0.5 text-[8px] font-bold rounded active:scale-95 cursor-pointer border ${
-                        isLightTheme 
-                          ? 'text-zinc-600 bg-[#FFF8E1] border-amber-300/80 hover:text-amber-700 hover:bg-amber-100' 
-                          : 'text-zinc-400 bg-slate-950 border border-slate-850 hover:text-white'
-                      }`}
+                      className="px-2 py-0.5 text-[10px] font-bold rounded-lg cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors"
                     >
                       {pct}%
                     </button>
@@ -3672,48 +3581,36 @@ export default function StandardUserDashboard({
                     setQuickTradeAmount(e.target.value);
                     setTradeMessage(null);
                   }}
-                  className={`w-full p-3.5 pr-20 border rounded-2xl text-xs focus:outline-none font-mono transition-all ${
-                    isLightTheme ? 'bg-[#FFF8E1] text-zinc-800' : 'bg-slate-950 text-white'
-                  } ${
-                    quickTradeType === 'BUY'
-                      ? isLightTheme
-                        ? 'border-amber-300/90 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/10'
-                        : 'border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20'
-                      : isLightTheme
-                        ? 'border-amber-300/90 focus:border-red-500 focus:ring-1 focus:ring-red-500/10'
-                        : 'border-slate-800 focus:border-red-500 focus:ring-1 focus:ring-red-500/20'
-                  }`}
+                  className="w-full p-3.5 pr-20 bg-slate-50 border border-slate-200/90 rounded-2xl text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 font-mono text-slate-900 placeholder:text-slate-400 transition-all"
                 />
-                <span className="absolute right-4 top-3.5 text-xs text-zinc-500 font-bold font-mono uppercase">{liveCoin.symbol}</span>
+                <span className="absolute right-4 top-3.5 text-xs text-slate-400 font-bold font-mono uppercase">{liveCoin.symbol}</span>
               </div>
 
               {/* Calculated estimated value subtext */}
               {quickTradeAmount && parseFloat(quickTradeAmount) > 0 && (
-                <div className="flex justify-between items-center text-[10px] text-zinc-500 font-mono px-1">
+                <div className="flex justify-between items-center text-[11px] text-slate-500 font-mono px-1">
                   <span>Estimated Value:</span>
-                  <span className={`font-bold ${isLightTheme ? 'text-zinc-700' : 'text-zinc-300'}`}>
+                  <span className="font-bold text-slate-800">
                     $ {((parseFloat(quickTradeAmount) || 0) * liveCoin.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                   </span>
                 </div>
               )}
             </div>
 
-
-
             {/* Submission Button */}
             <button
               type="button"
               disabled={tradeLoading || !quickTradeAmount || parseFloat(quickTradeAmount) <= 0}
               onClick={() => handleBuySellCrypto(liveCoin.symbol, quickTradeType, quickTradeAmount)}
-              className={`w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-[0.985] disabled:opacity-40 disabled:pointer-events-none cursor-pointer ${
+              className={`w-full py-4 rounded-2xl font-bold text-sm tracking-wide text-white flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.99] disabled:opacity-40 disabled:pointer-events-none cursor-pointer ${
                 quickTradeType === 'BUY' 
-                  ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 shadow-emerald-500/10' 
-                  : 'bg-gradient-to-tr from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400 text-white shadow-rose-500/10'
+                  ? 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20' 
+                  : 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20'
               }`}
             >
               {tradeLoading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Executing Order...</span>
                 </>
               ) : (
@@ -3941,12 +3838,13 @@ export default function StandardUserDashboard({
                         </div>
                       ) : (
                         filteredNotifications.map((tx) => {
-                          const isUnread = !readNotificationIds.includes(tx.id) && (tx.status === 'APPROVED' || tx.status === 'DECLINED');
+                          const isFailed = tx.status === 'DECLINED' || tx.status === 'FAILED' || tx.status === 'EXPIRED' || tx.status === 'CANCELLED' || tx.gatewayStatus === 'expired' || tx.gatewayStatus === 'failed';
+                          const isUnread = !readNotificationIds.includes(tx.id) && (tx.status === 'APPROVED' || isFailed);
                           const isDeposit = tx.type?.includes('deposit');
                           const isWithdraw = tx.type?.includes('withdraw');
                           const isApproved = tx.status === 'APPROVED';
                           const isDeclined = tx.status === 'DECLINED';
-                          const isPending = !isApproved && !isDeclined;
+                          const isPending = !isApproved && !isFailed;
 
                           return (
                             <div
@@ -3962,13 +3860,13 @@ export default function StandardUserDashboard({
                                   ? isDeposit 
                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-200/80' 
                                     : 'bg-teal-50 text-teal-600 border-teal-200/80'
-                                  : isDeclined 
+                                  : isFailed 
                                     ? 'bg-rose-50 text-rose-600 border-rose-200/80'
                                     : 'bg-amber-50 text-amber-600 border-amber-200/80'
                               }`}>
                                 {isApproved ? (
                                   isDeposit ? <ArrowDownLeft size={18} strokeWidth={2.5} /> : <ArrowUpRight size={18} strokeWidth={2.5} />
-                                ) : isDeclined ? (
+                                ) : isFailed ? (
                                   <AlertTriangle size={17} strokeWidth={2.2} />
                                 ) : (
                                   <Clock size={17} strokeWidth={2.2} />
@@ -3980,9 +3878,9 @@ export default function StandardUserDashboard({
                                 <div className="flex items-center justify-between gap-2">
                                   <span className="font-bold text-xs text-zinc-900 truncate">
                                     {isDeposit 
-                                      ? (isApproved ? 'Deposit Approved' : isDeclined ? 'Deposit Declined' : 'Deposit Submitted')
+                                      ? (isApproved ? 'Deposit Approved' : isFailed ? 'Deposit Failed' : 'Deposit Submitted')
                                       : isWithdraw 
-                                        ? (isApproved ? 'Withdrawal Approved' : isDeclined ? 'Withdrawal Declined' : 'Withdrawal Pending')
+                                        ? (isApproved ? 'Withdrawal Approved' : isFailed ? 'Withdrawal Declined' : 'Withdrawal Pending')
                                         : tx.paymentMessage || 'Transaction Update'}
                                   </span>
                                   <span className="text-[10px] text-zinc-400 font-medium shrink-0">
@@ -4094,7 +3992,7 @@ export default function StandardUserDashboard({
 
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[350px] gap-3">
-          <RefreshCw size={28} className="text-[#ff444f] animate-spin" />
+          <RefreshCw size={28} className="text-emerald-500 animate-spin" />
           <span className="text-xs text-slate-400 font-semibold">Decrypting wallet keys...</span>
         </div>
       ) : (
@@ -4427,7 +4325,12 @@ export default function StandardUserDashboard({
               <div className="bg-[#f4f5f8] text-slate-900 px-4 pt-5 pb-8 min-h-[500px]">
                 <div className="max-w-4xl mx-auto space-y-6">
                   {/* News Slideshow */}
-                  <NewsCarousel cryptoPrices={cryptoPrices} />
+                  <NewsCarousel 
+                    cryptoPrices={cryptoPrices} 
+                    onOpenDeposit={() => onOpenDeposit()}
+                    onOpenProfile={onOpenProfile}
+                    onSwitchTab={handleTabChange}
+                  />
 
                   {/* Live Crypto Market Feed */}
                   <div className="space-y-3 pt-1">
@@ -4453,11 +4356,11 @@ export default function StandardUserDashboard({
                             <div className="flex items-center gap-2">
                               <CoinIcon symbol={coin.symbol} className="w-8 h-8" />
                               <div className="min-w-0">
-                                <span className="font-bold text-xs block truncate text-slate-900 group-hover:text-[#ff444f] transition-colors">{coin.name}</span>
+                                <span className="font-bold text-xs block truncate text-slate-900 group-hover:text-emerald-600 transition-colors">{coin.name}</span>
                                 <span className="text-[10px] uppercase tracking-wider font-semibold block text-slate-400">{coin.symbol}</span>
                               </div>
                             </div>
-                            <div className="text-slate-400 group-hover:text-[#ff444f] transition-colors shrink-0">
+                            <div className="text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0">
                               <ArrowRight size={13} className="transform group-hover:translate-x-0.5 transition-transform" />
                             </div>
                           </div>
@@ -4663,7 +4566,7 @@ export default function StandardUserDashboard({
                                 <CoinIcon symbol={asset.symbol} className="w-10 h-10" />
                                 <div>
                                   <div className="flex items-center gap-1.5">
-                                    <span className="font-bold text-xs text-slate-900 group-hover:text-[#ff444f] transition-colors">{asset.name}</span>
+                                    <span className="font-bold text-xs text-slate-900 group-hover:text-emerald-600 transition-colors">{asset.name}</span>
                                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border text-slate-600 bg-slate-100 border-slate-200">
                                       {assetPct.toFixed(1)}%
                                     </span>
@@ -4687,7 +4590,7 @@ export default function StandardUserDashboard({
                                   </span>
                                 </div>
 
-                                <div className="text-slate-400 group-hover:text-[#ff444f] transition-colors">
+                                <div className="text-slate-400 group-hover:text-emerald-600 transition-colors">
                                   <ArrowRight size={14} className="transform group-hover:translate-x-0.5 transition-transform" />
                                 </div>
                               </div>
@@ -4817,238 +4720,201 @@ export default function StandardUserDashboard({
               <div className="bg-[#f4f5f8] text-slate-900 px-4 pt-5 pb-8 min-h-[500px]">
                 <div className="max-w-4xl mx-auto space-y-6">
                   {/* Header */}
-                  <div className="flex items-center justify-between pb-1 select-none">
-                    <div>
-                      <h2 className={`text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2 ${
-                        isLightTheme ? 'text-zinc-900' : 'text-white'
-                      }`}>
-                        <Bot className={isLightTheme ? 'text-amber-500' : 'text-emerald-400'} size={24} />
-                        BOTS
-                      </h2>
-                      <p className={`text-xs mt-0.5 ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                        Automated trading bots & yield harvesting strategies
-                      </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 select-none">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-600 flex items-center justify-center shadow-xs">
+                        <Bot size={22} strokeWidth={2.2} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                            Algorithmic Bot Hub
+                          </h2>
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80 uppercase">
+                            Automated
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                          High-frequency quant engines, arbitrage snipers & yield harvesting strategies
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Quick Stats Pill */}
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 shadow-xs text-xs font-mono">
+                        <span className="text-slate-400 font-semibold uppercase text-[10px]">Active Bots:</span>
+                        <span className="font-bold text-emerald-600 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          {userBots.filter(b => b.status !== 'STOPPED').length} Running
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-              {profile && profile.tradeEnabled === false && (
-                <div id="bots-trading-paused-alert" className="p-3.5 sm:p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-start gap-3 shadow-sm animate-fade-in">
-                  <ShieldAlert size={18} className="mt-0.5 shrink-0 text-rose-400" strokeWidth={2.5} />
-                  <div className="space-y-0.5 text-xs">
-                    <strong className="block font-bold text-rose-200">Trading Capabilities Paused</strong>
-                    <span className="text-rose-300/90 leading-relaxed block">
-                      Deploying new trading bots and executing trades is currently paused by the administrator. Contact support for assistance.
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-6">
-                {/* MAIN HUB MENU: 4 CARDS (Matching Blueprint Layout) */}
-                  {botHubView === 'menu' && (
-                    <div className="space-y-6 animate-fade-in">
-                      {/* 2x2 Grid of 4 Cards */}
-                      <div className="grid grid-cols-2 gap-3 sm:gap-4 select-none">
-                        {/* 1. PREMIUM BOTS */}
-                        <button
-                          type="button"
-                          onClick={() => setBotHubView('PREMIUM')}
-                          className={`p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[155px] sm:min-h-[185px] select-none ${
-                            isLightTheme 
-                              ? 'bg-white border-amber-200/90 shadow-xs hover:shadow-xl hover:border-amber-400 hover:-translate-y-0.5' 
-                              : 'bg-slate-800/95 border-slate-700 hover:border-amber-400/60 shadow-xs hover:-translate-y-0.5'
-                          }`}
-                        >
-                          <div className="space-y-2 sm:space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center shadow-md shadow-amber-500/30 group-hover:scale-105 transition-transform duration-200">
-                                <Crown size={18} className="sm:w-5 sm:h-5 drop-shadow-xs" />
-                              </div>
-                              <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border ${
-                                isLightTheme ? 'bg-amber-100/90 text-amber-950 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                              }`}>
-                                PRO
-                              </span>
-                            </div>
-
-                            <div>
-                              <h4 className={`text-xs sm:text-base font-black tracking-tight leading-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors ${
-                                isLightTheme ? 'text-zinc-900' : 'text-white'
-                              }`}>
-                                Premium BOTS
-                              </h4>
-                              <p className={`text-[10px] sm:text-xs mt-0.5 font-medium line-clamp-1 ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                High-yield automated strategies
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className={`pt-2.5 sm:pt-3 border-t flex items-center justify-between text-[10px] sm:text-xs font-bold gap-1 ${
-                            isLightTheme ? 'border-zinc-100 text-amber-700' : 'border-slate-700/80 text-amber-400'
-                          }`}>
-                            <span className="truncate">
-                              {(botTemplates.length > 0 ? botTemplates : BOT_TEMPLATES).filter(t => (t.category || '').toUpperCase() === 'PREMIUM' || (!t.category || t.category.toUpperCase() !== 'FREE')).length} Available
-                            </span>
-                            <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                              isLightTheme 
-                                ? 'bg-amber-100/80 text-amber-800 group-hover:bg-amber-500 group-hover:text-white shadow-xs' 
-                                : 'bg-amber-500/20 text-amber-300 group-hover:bg-amber-500 group-hover:text-white'
-                            }`}>
-                              <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                            </div>
-                          </div>
-                        </button>
-
-                        {/* 2. FREE BOTS */}
-                        <button
-                          type="button"
-                          onClick={() => setBotHubView('FREE')}
-                          className={`p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[155px] sm:min-h-[185px] select-none ${
-                            isLightTheme 
-                              ? 'bg-white border-emerald-200/90 shadow-xs hover:shadow-xl hover:border-emerald-400 hover:-translate-y-0.5' 
-                              : 'bg-slate-800/95 border-slate-700 hover:border-emerald-400/60 shadow-xs hover:-translate-y-0.5'
-                          }`}
-                        >
-                          <div className="space-y-2 sm:space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-500 to-emerald-400 text-white flex items-center justify-center shadow-md shadow-emerald-500/30 group-hover:scale-105 transition-transform duration-200">
-                                <Gift size={18} className="sm:w-5 sm:h-5 drop-shadow-xs" />
-                              </div>
-                              <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border ${
-                                isLightTheme ? 'bg-emerald-100/90 text-emerald-950 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                              }`}>
-                                FREE
-                              </span>
-                            </div>
-
-                            <div>
-                              <h4 className={`text-xs sm:text-base font-black tracking-tight leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors ${
-                                isLightTheme ? 'text-zinc-900' : 'text-white'
-                              }`}>
-                                Free BOTS
-                              </h4>
-                              <p className={`text-[10px] sm:text-xs mt-0.5 font-medium line-clamp-1 ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                Starter trading algorithms
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className={`pt-2.5 sm:pt-3 border-t flex items-center justify-between text-[10px] sm:text-xs font-bold gap-1 ${
-                            isLightTheme ? 'border-zinc-100 text-emerald-700' : 'border-slate-700/80 text-emerald-400'
-                          }`}>
-                            <span className="truncate">
-                              {(botTemplates.length > 0 ? botTemplates : BOT_TEMPLATES).filter(t => (t.category || '').toUpperCase() === 'FREE').length} Available
-                            </span>
-                            <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                              isLightTheme 
-                                ? 'bg-emerald-100/80 text-emerald-800 group-hover:bg-emerald-500 group-hover:text-white shadow-xs' 
-                                : 'bg-emerald-500/20 text-emerald-300 group-hover:bg-emerald-500 group-hover:text-white'
-                            }`}>
-                              <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                            </div>
-                          </div>
-                        </button>
-
-                        {/* 3. HISTORY */}
-                        <button
-                          type="button"
-                          onClick={() => setBotHubView('HISTORY')}
-                          className={`p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[155px] sm:min-h-[185px] select-none ${
-                            isLightTheme 
-                              ? 'bg-white border-indigo-200/90 shadow-xs hover:shadow-xl hover:border-indigo-400 hover:-translate-y-0.5' 
-                              : 'bg-slate-800/95 border-slate-700 hover:border-indigo-400/60 shadow-xs hover:-translate-y-0.5'
-                          }`}
-                        >
-                          <div className="space-y-2 sm:space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-indigo-500 to-indigo-400 text-white flex items-center justify-center shadow-md shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-200">
-                                <History size={18} className="sm:w-5 sm:h-5 drop-shadow-xs" />
-                              </div>
-                              <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border ${
-                                isLightTheme ? 'bg-indigo-100/90 text-indigo-950 border-indigo-300' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
-                              }`}>
-                                LOGS
-                              </span>
-                            </div>
-
-                            <div>
-                              <h4 className={`text-xs sm:text-base font-black tracking-tight leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors ${
-                                isLightTheme ? 'text-zinc-900' : 'text-white'
-                              }`}>
-                                Bot History
-                              </h4>
-                              <p className={`text-[10px] sm:text-xs mt-0.5 font-medium line-clamp-1 ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                Profit & execution records
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className={`pt-2.5 sm:pt-3 border-t flex items-center justify-between text-[10px] sm:text-xs font-bold gap-1 ${
-                            isLightTheme ? 'border-zinc-100 text-indigo-700' : 'border-slate-700/80 text-indigo-400'
-                          }`}>
-                            <span className="truncate">
-                              {userTransactions.filter(tx => tx.type === 'Auto Bot trade' || tx.type === 'bot_harvest' || tx.type === 'bot_trade' || (tx.type && tx.type.toLowerCase().includes('bot')) || (tx.title && tx.title.toLowerCase().includes('bot'))).length} Logs<span className="hidden sm:inline"> Recorded</span>
-                            </span>
-                            <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                              isLightTheme 
-                                ? 'bg-indigo-100/80 text-indigo-800 group-hover:bg-indigo-500 group-hover:text-white shadow-xs' 
-                                : 'bg-indigo-500/20 text-indigo-300 group-hover:bg-indigo-500 group-hover:text-white'
-                            }`}>
-                              <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                            </div>
-                          </div>
-                        </button>
-
-                        {/* 4. MY BOTS */}
-                        <button
-                          type="button"
-                          onClick={() => setBotHubView('MY_BOTS')}
-                          className={`p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[155px] sm:min-h-[185px] select-none ${
-                            isLightTheme 
-                              ? 'bg-white border-blue-200/90 shadow-xs hover:shadow-xl hover:border-blue-400 hover:-translate-y-0.5' 
-                              : 'bg-slate-800/95 border-slate-700 hover:border-blue-400/60 shadow-xs hover:-translate-y-0.5'
-                          }`}
-                        >
-                          <div className="space-y-2 sm:space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-blue-500 to-blue-400 text-white flex items-center justify-center shadow-md shadow-blue-500/30 group-hover:scale-105 transition-transform duration-200">
-                                <Bot size={18} className="sm:w-5 sm:h-5 drop-shadow-xs" />
-                              </div>
-                              <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border ${
-                                isLightTheme ? 'bg-blue-100/90 text-blue-950 border-blue-300' : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                              }`}>
-                                ACTIVE
-                              </span>
-                            </div>
-
-                            <div>
-                              <h4 className={`text-xs sm:text-base font-black tracking-tight leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors ${
-                                isLightTheme ? 'text-zinc-900' : 'text-white'
-                              }`}>
-                                My Active Bots
-                              </h4>
-                              <p className={`text-[10px] sm:text-xs mt-0.5 font-medium line-clamp-1 ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                Running bot instances
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className={`pt-2.5 sm:pt-3 border-t flex items-center justify-between text-[10px] sm:text-xs font-bold gap-1 ${
-                            isLightTheme ? 'border-zinc-100 text-blue-700' : 'border-slate-700/80 text-blue-400'
-                          }`}>
-                            <span className="truncate">{userBots.filter(b => b.status !== 'STOPPED').length} Active</span>
-                            <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                              isLightTheme 
-                                ? 'bg-blue-100/80 text-blue-800 group-hover:bg-blue-500 group-hover:text-white shadow-xs' 
-                                : 'bg-blue-500/20 text-blue-300 group-hover:bg-blue-500 group-hover:text-white'
-                            }`}>
-                              <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                            </div>
-                          </div>
-                        </button>
+                  {profile && profile.tradeEnabled === false && (
+                    <div id="bots-trading-paused-alert" className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 shadow-xs animate-fade-in">
+                      <ShieldAlert size={18} className="mt-0.5 shrink-0 text-rose-600" strokeWidth={2.5} />
+                      <div className="space-y-0.5 text-xs">
+                        <strong className="block font-bold text-rose-900">Trading Capabilities Paused</strong>
+                        <span className="text-rose-700/90 leading-relaxed block">
+                          Deploying new trading bots and executing trades is currently paused by the administrator. Contact support for assistance.
+                        </span>
                       </div>
                     </div>
                   )}
+
+                  <div className="space-y-6">
+                    {/* MAIN HUB MENU: 4 MODERN CARDS */}
+                    {botHubView === 'menu' && (
+                      <div className="space-y-6 animate-fade-in">
+                        {/* 2x2 Grid of 4 Cards */}
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 select-none">
+                          {/* 1. PREMIUM BOTS */}
+                          <button
+                            type="button"
+                            onClick={() => setBotHubView('PREMIUM')}
+                            className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[165px] sm:min-h-[195px] select-none text-left"
+                          >
+                            <div className="space-y-2.5 sm:space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-slate-900 text-amber-400 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200">
+                                  <Crown size={20} className="sm:w-5 sm:h-5" />
+                                </div>
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border bg-amber-50 text-amber-800 border-amber-200/80 font-mono">
+                                  PRO ALGO
+                                </span>
+                              </div>
+
+                              <div>
+                                <h4 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                  Premium Bots
+                                </h4>
+                                <p className="text-[11px] sm:text-xs mt-0.5 font-medium text-slate-500 line-clamp-2 leading-relaxed">
+                                  High-yield cross-exchange arbitrage & flash-loan scalp engines
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-slate-600">
+                              <span className="truncate">
+                                {(botTemplates.length > 0 ? botTemplates : BOT_TEMPLATES).filter(t => (t.category || '').toUpperCase() === 'PREMIUM' || (!t.category || t.category.toUpperCase() !== 'FREE')).length} Strategies
+                              </span>
+                              <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-emerald-500 text-slate-600 group-hover:text-white flex items-center justify-center transition-all">
+                                <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                              </div>
+                            </div>
+                          </button>
+
+                          {/* 2. FREE BOTS */}
+                          <button
+                            type="button"
+                            onClick={() => setBotHubView('FREE')}
+                            className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[165px] sm:min-h-[195px] select-none text-left"
+                          >
+                            <div className="space-y-2.5 sm:space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-xs shadow-emerald-500/25 group-hover:scale-105 transition-transform duration-200">
+                                  <Gift size={20} className="sm:w-5 sm:h-5" />
+                                </div>
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-200/80 font-mono">
+                                  STARTER
+                                </span>
+                              </div>
+
+                              <div>
+                                <h4 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                  Free Starter Bots
+                                </h4>
+                                <p className="text-[11px] sm:text-xs mt-0.5 font-medium text-slate-500 line-clamp-2 leading-relaxed">
+                                  Low-risk automated DCA & grid scalpers for all balance tiers
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-slate-600">
+                              <span className="truncate">
+                                {(botTemplates.length > 0 ? botTemplates : BOT_TEMPLATES).filter(t => (t.category || '').toUpperCase() === 'FREE').length} Strategies
+                              </span>
+                              <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-emerald-500 text-slate-600 group-hover:text-white flex items-center justify-center transition-all">
+                                <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                              </div>
+                            </div>
+                          </button>
+
+                          {/* 3. HISTORY */}
+                          <button
+                            type="button"
+                            onClick={() => setBotHubView('HISTORY')}
+                            className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[165px] sm:min-h-[195px] select-none text-left"
+                          >
+                            <div className="space-y-2.5 sm:space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-xs shadow-indigo-600/25 group-hover:scale-105 transition-transform duration-200">
+                                  <History size={20} className="sm:w-5 sm:h-5" />
+                                </div>
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border bg-indigo-50 text-indigo-800 border-indigo-200/80 font-mono">
+                                  AUDIT
+                                </span>
+                              </div>
+
+                              <div>
+                                <h4 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                  Trade History
+                                </h4>
+                                <p className="text-[11px] sm:text-xs mt-0.5 font-medium text-slate-500 line-clamp-2 leading-relaxed">
+                                  Real-time execution logs, win rates & profit harvest reports
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-slate-600">
+                              <span className="truncate">
+                                {userTransactions.filter(tx => tx.type === 'Auto Bot trade' || tx.type === 'bot_harvest' || tx.type === 'bot_trade' || (tx.type && tx.type.toLowerCase().includes('bot')) || (tx.title && tx.title.toLowerCase().includes('bot'))).length} Logs Recorded
+                              </span>
+                              <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-emerald-500 text-slate-600 group-hover:text-white flex items-center justify-center transition-all">
+                                <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                              </div>
+                            </div>
+                          </button>
+
+                          {/* 4. MY BOTS */}
+                          <button
+                            type="button"
+                            onClick={() => setBotHubView('MY_BOTS')}
+                            className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/90 hover:border-slate-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col justify-between group min-h-[165px] sm:min-h-[195px] select-none text-left"
+                          >
+                            <div className="space-y-2.5 sm:space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-600 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform duration-200">
+                                  <Bot size={20} className="sm:w-5 sm:h-5" />
+                                </div>
+                                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-200/80 font-mono flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  ACTIVE
+                                </span>
+                              </div>
+
+                              <div>
+                                <h4 className="text-sm sm:text-base font-bold tracking-tight text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                  My Active Bots
+                                </h4>
+                                <p className="text-[11px] sm:text-xs mt-0.5 font-medium text-slate-500 line-clamp-2 leading-relaxed">
+                                  Monitor running capital, live profit tickers & controls
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-slate-600">
+                              <span className="truncate">{userBots.filter(b => b.status !== 'STOPPED').length} Running</span>
+                              <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-emerald-500 text-slate-600 group-hover:text-white flex items-center justify-center transition-all">
+                                <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                   {/* SUB-PAGE VIEWS */}
                   {botHubView !== 'menu' && (
@@ -5058,80 +4924,96 @@ export default function StandardUserDashboard({
                         <button
                           type="button"
                           onClick={() => setBotHubView('menu')}
-                          className={`group px-3.5 py-2 rounded-full border text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
+                          className={`group px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
                             isLightTheme 
-                              ? 'bg-white border-zinc-200/90 text-zinc-800 hover:bg-zinc-50 hover:border-amber-400/50' 
+                              ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900' 
                               : 'bg-slate-900 border-slate-700/80 text-zinc-100 hover:bg-slate-850 hover:border-slate-600'
                           }`}
                         >
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-transform group-hover:-translate-x-0.5 ${
-                            isLightTheme ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/15 text-emerald-400'
+                          <div className={`w-5 h-5 rounded-lg flex items-center justify-center transition-transform group-hover:-translate-x-0.5 ${
+                            isLightTheme ? 'bg-slate-100 text-slate-600' : 'bg-slate-800 text-slate-300'
                           }`}>
-                            <ArrowLeft size={12} strokeWidth={2.5} />
+                            <ArrowLeft size={13} strokeWidth={2.5} />
                           </div>
-                          <span>Back to Bots</span>
+                          <span>All Categories</span>
                         </button>
 
-                        {botHubView === 'PREMIUM' && (
-                          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-2xs transition-all ${
-                            isLightTheme 
-                              ? 'bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-amber-500/10 text-amber-900 border-amber-300/80' 
-                              : 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-300 border-amber-500/30'
-                          }`}>
-                            <Crown size={13} className={isLightTheme ? 'text-amber-600' : 'text-amber-400'} />
-                            <span>Premium Category</span>
-                          </div>
-                        )}
+                        {/* Segmented direct switcher */}
+                        <div className={`flex items-center gap-1 p-1 rounded-2xl border ${
+                          isLightTheme ? 'bg-slate-100/90 border-slate-200/80' : 'bg-slate-900/90 border-slate-800'
+                        }`}>
+                          <button
+                            type="button"
+                            onClick={() => setBotHubView('PREMIUM')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                              botHubView === 'PREMIUM'
+                                ? isLightTheme ? 'bg-white text-slate-900 shadow-xs' : 'bg-slate-800 text-white shadow-xs'
+                                : isLightTheme ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <Crown size={13} className={botHubView === 'PREMIUM' ? 'text-amber-500' : 'text-slate-400'} />
+                            <span>Premium</span>
+                          </button>
 
-                        {botHubView === 'FREE' && (
-                          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-2xs transition-all ${
-                            isLightTheme 
-                              ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/80 text-emerald-900 border-emerald-300/80' 
-                              : 'bg-gradient-to-r from-emerald-500/20 to-teal-600/10 text-emerald-300 border-emerald-500/30'
-                          }`}>
-                            <Gift size={13} className={isLightTheme ? 'text-emerald-600' : 'text-emerald-400'} />
-                            <span>Free Category</span>
-                          </div>
-                        )}
+                          <button
+                            type="button"
+                            onClick={() => setBotHubView('FREE')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                              botHubView === 'FREE'
+                                ? isLightTheme ? 'bg-white text-slate-900 shadow-xs' : 'bg-slate-800 text-white shadow-xs'
+                                : isLightTheme ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <Gift size={13} className={botHubView === 'FREE' ? 'text-emerald-500' : 'text-slate-400'} />
+                            <span>Free Starter</span>
+                          </button>
 
-                        {botHubView === 'HISTORY' && (
-                          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-2xs transition-all ${
-                            isLightTheme 
-                              ? 'bg-gradient-to-r from-indigo-50 to-indigo-100/80 text-indigo-900 border-indigo-300/80' 
-                              : 'bg-gradient-to-r from-indigo-500/20 to-violet-600/10 text-indigo-300 border-indigo-500/30'
-                          }`}>
-                            <History size={13} className={isLightTheme ? 'text-indigo-600' : 'text-indigo-400'} />
+                          <button
+                            type="button"
+                            onClick={() => setBotHubView('MY_BOTS')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                              botHubView === 'MY_BOTS'
+                                ? isLightTheme ? 'bg-white text-slate-900 shadow-xs' : 'bg-slate-800 text-white shadow-xs'
+                                : isLightTheme ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <Bot size={13} className={botHubView === 'MY_BOTS' ? 'text-blue-500' : 'text-slate-400'} />
+                            <span>My Bots ({userBots.filter(b => b.status !== 'STOPPED').length})</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setBotHubView('HISTORY')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                              botHubView === 'HISTORY'
+                                ? isLightTheme ? 'bg-white text-slate-900 shadow-xs' : 'bg-slate-800 text-white shadow-xs'
+                                : isLightTheme ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <History size={13} className={botHubView === 'HISTORY' ? 'text-indigo-500' : 'text-slate-400'} />
                             <span>Trade Logs</span>
-                          </div>
-                        )}
-
-                        {botHubView === 'MY_BOTS' && (
-                          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-2xs transition-all ${
-                            isLightTheme 
-                              ? 'bg-gradient-to-r from-blue-50 to-blue-100/80 text-blue-900 border-blue-300/80' 
-                              : 'bg-gradient-to-r from-blue-500/20 to-cyan-600/10 text-blue-300 border-blue-500/30'
-                          }`}>
-                            <Bot size={13} className={isLightTheme ? 'text-blue-600' : 'text-blue-400'} />
-                            <span>User Bots</span>
-                          </div>
-                        )}
+                          </button>
+                        </div>
                       </div>
 
                       {/* PAGE 1: PREMIUM BOTS */}
                       {botHubView === 'PREMIUM' && (
-                        <div className={`border rounded-3xl p-5 space-y-4 ${
-                          isLightTheme ? 'bg-white border-zinc-200/80 shadow-xs' : 'bg-slate-800 border-slate-700/80'
+                        <div className={`border rounded-3xl p-5 sm:p-6 space-y-5 ${
+                          isLightTheme ? 'bg-white border-slate-200/90 shadow-xs' : 'bg-slate-900 border-slate-800'
                         }`}>
-                          <div className="flex justify-between items-center select-none">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                             <div>
-                              <h3 className={`text-sm font-black tracking-tight flex items-center gap-1.5 ${isLightTheme ? 'text-zinc-800' : 'text-zinc-200'}`}>
+                              <h3 className={`text-base font-bold tracking-tight flex items-center gap-2 ${isLightTheme ? 'text-slate-900' : 'text-white'}`}>
                                 <Crown size={18} className="text-amber-500" />
-                                PREMIUM BOTS
+                                Institutional Quant Strategies
                               </h3>
-                              <p className={`text-xs mt-0.5 ${isLightTheme ? 'text-zinc-400' : 'text-zinc-400'}`}>
-                                Exclusive high-yield algorithmic trading bots configured by admin.
+                              <p className={`text-xs mt-0.5 ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                Curated algorithmic scalping and flash-arbitrage strategies configured for optimal market conditions.
                               </p>
                             </div>
+                            <span className="text-xs font-mono text-slate-500 self-start sm:self-auto">
+                              Tier 1 Execution
+                            </span>
                           </div>
 
                           <div className="grid grid-cols-1 gap-4">
@@ -5141,104 +5023,82 @@ export default function StandardUserDashboard({
                               .map((tmpl) => (
                                 <div 
                                   key={tmpl.id}
-                                  className={`p-4 sm:p-5 rounded-3xl border flex flex-col justify-between transition-all duration-300 space-y-4 relative overflow-hidden group ${
+                                  className={`p-5 sm:p-6 rounded-3xl border transition-all duration-200 space-y-4 ${
                                     isLightTheme 
-                                      ? 'bg-gradient-to-br from-white via-amber-50/20 to-orange-50/30 border-amber-200/90 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/10' 
-                                      : 'bg-gradient-to-br from-slate-900/90 via-slate-850 to-slate-900 border-slate-700/80 hover:border-amber-500/60 hover:shadow-xl'
+                                      ? 'bg-slate-50/50 hover:bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-md' 
+                                      : 'bg-slate-950/60 hover:bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-lg'
                                   }`}
                                 >
-                                  {/* Top accent shine line */}
-                                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 opacity-80" />
-
-                                  <div className="space-y-3.5">
-                                    {/* Card Header */}
-                                    <div className="flex items-start justify-between gap-3 pt-1">
-                                      <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/25 group-hover:scale-105 transition-transform duration-200">
-                                          <Crown size={20} className="drop-shadow-xs" />
-                                        </div>
-                                        <div>
-                                          <h4 className={`text-sm sm:text-base font-black tracking-tight leading-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors ${
-                                            isLightTheme ? 'text-zinc-900' : 'text-white'
-                                          }`}>
-                                            {tmpl.name}
-                                          </h4>
-                                          <p className={`text-[10px] sm:text-xs mt-0.5 font-medium line-clamp-1 ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                            {tmpl.description || 'High-yield algorithmic flash-loan & scalp strategy'}
-                                          </p>
-                                        </div>
+                                  {/* Card Header */}
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-3.5">
+                                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+                                        isLightTheme 
+                                          ? 'bg-amber-50 border-amber-200/70 text-amber-600 shadow-2xs' 
+                                          : 'bg-amber-500/10 border-amber-500/30 text-amber-400 shadow-2xs'
+                                      }`}>
+                                        <Crown size={20} />
                                       </div>
-
-                                      <span className={`px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-mono font-black uppercase tracking-wider shrink-0 border flex items-center gap-1 ${
-                                        isLightTheme ? 'bg-amber-100/90 text-amber-950 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                      }`}>
-                                        <Crown size={10} className="text-amber-600" />
-                                        PREMIUM
-                                      </span>
-                                    </div>
-
-                                    {/* 2-Column Key Metrics Grid */}
-                                    <div className="grid grid-cols-2 gap-2.5">
-                                      <div className={`p-3 rounded-2xl border flex flex-col justify-between ${
-                                        isLightTheme ? 'bg-white/90 border-amber-100/80 shadow-2xs' : 'bg-slate-950/70 border-slate-800'
-                                      }`}>
-                                        <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-zinc-500 dark:text-zinc-400">
-                                          <TrendingUp size={13} className="text-emerald-500 shrink-0" />
-                                          <span>Win Ratio</span>
-                                        </div>
-                                        <div className="mt-1 flex items-baseline gap-1">
-                                          <span className="text-sm sm:text-base font-mono font-black text-emerald-600 dark:text-emerald-400">
-                                            {tmpl.winRatioRange || '92-98%'}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      <div className={`p-3 rounded-2xl border flex flex-col justify-between ${
-                                        isLightTheme ? 'bg-white/90 border-amber-100/80 shadow-2xs' : 'bg-slate-950/70 border-slate-800'
-                                      }`}>
-                                        <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-zinc-500 dark:text-zinc-400">
-                                          <Coins size={13} className="text-amber-500 shrink-0" />
-                                          <span>Min Capital</span>
-                                        </div>
-                                        <div className="mt-1 flex items-baseline gap-1">
-                                          <span className={`text-base sm:text-lg font-mono font-black ${
-                                            isLightTheme ? 'text-zinc-950' : 'text-white'
-                                          }`}>
-                                            {getTemplateMinCapital(tmpl)}
-                                          </span>
-                                          <span className="text-xs font-bold text-amber-600 dark:text-amber-400">USDT</span>
-                                        </div>
+                                      <div>
+                                        <h4 className={`text-base font-bold tracking-tight ${
+                                          isLightTheme ? 'text-slate-900' : 'text-white'
+                                        }`}>
+                                          {tmpl.name}
+                                        </h4>
+                                        <p className={`text-xs mt-0.5 line-clamp-2 ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                          {tmpl.description || 'High-yield algorithmic flash-loan & scalp strategy'}
+                                        </p>
                                       </div>
                                     </div>
 
-                                    {/* Risk & Execution Bar */}
-                                    <div className={`px-3 py-2 rounded-xl border flex items-center justify-between text-[11px] font-bold ${
-                                      isLightTheme ? 'bg-amber-50/50 border-amber-200/50 text-zinc-700' : 'bg-slate-900/50 border-slate-800 text-zinc-300'
+                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-semibold uppercase tracking-wider shrink-0 border ${
+                                      isLightTheme ? 'bg-amber-50 text-amber-800 border-amber-200/80' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
                                     }`}>
-                                      <div className="flex items-center gap-1.5">
-                                        <ShieldCheck size={13} className="text-amber-500" />
-                                        <span className="text-zinc-400 font-normal">Risk Profile:</span>
-                                        <span className="font-mono font-black text-amber-700 dark:text-amber-300">
-                                          {tmpl.riskLevel || 'Low Risk'}
+                                      Premium Strategy
+                                    </span>
+                                  </div>
+
+                                  {/* 3-Column Key Metrics Grid */}
+                                  <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                                    <div className={`p-3 rounded-2xl border ${
+                                      isLightTheme ? 'bg-white border-slate-200/80' : 'bg-slate-900/80 border-slate-800'
+                                    }`}>
+                                      <span className="text-[11px] font-medium text-slate-500 block">Win Ratio</span>
+                                      <span className="text-sm sm:text-base font-mono font-bold text-emerald-600 block mt-0.5">
+                                        {tmpl.winRatioRange || '92-98%'}
+                                      </span>
+                                    </div>
+
+                                    <div className={`p-3 rounded-2xl border ${
+                                      isLightTheme ? 'bg-white border-slate-200/80' : 'bg-slate-900/80 border-slate-800'
+                                    }`}>
+                                      <span className="text-[11px] font-medium text-slate-500 block">Min Capital</span>
+                                      <div className="flex items-baseline gap-1 mt-0.5">
+                                        <span className={`text-sm sm:text-base font-mono font-bold ${
+                                          isLightTheme ? 'text-slate-900' : 'text-white'
+                                        }`}>
+                                          {getTemplateMinCapital(tmpl)}
                                         </span>
-                                      </div>
-                                      <div className="flex items-center gap-1 font-mono text-[10px] text-zinc-400">
-                                        <Zap size={11} className="text-amber-500 fill-amber-500/20" />
-                                        <span>Auto Scalp</span>
+                                        <span className="text-[10px] font-medium text-slate-500">USDT</span>
                                       </div>
                                     </div>
 
-                                    {/* Supported Trading Pairs Badges */}
-                                    <div className="space-y-1.5 pt-1">
-                                      <span className={`text-[10px] font-bold uppercase tracking-wider block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                        Trading Pairs
+                                    <div className={`p-3 rounded-2xl border ${
+                                      isLightTheme ? 'bg-white border-slate-200/80' : 'bg-slate-900/80 border-slate-800'
+                                    }`}>
+                                      <span className="text-[11px] font-medium text-slate-500 block">Risk Profile</span>
+                                      <span className="text-xs sm:text-sm font-mono font-medium text-slate-700 dark:text-slate-300 block mt-0.5 truncate">
+                                        {tmpl.riskLevel || 'Low Risk'}
                                       </span>
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        {(tmpl.tradingPairs && tmpl.tradingPairs.length > 0 ? tmpl.tradingPairs : DEFAULT_BOT_TRADING_PAIRS).map((pairKey: string) => (
-                                          <TradingPairBadge key={pairKey} pair={pairKey} isLightTheme={isLightTheme} size="sm" />
-                                        ))}
-                                      </div>
                                     </div>
+                                  </div>
+
+                                  {/* Supported Trading Pairs */}
+                                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                                    <span className="text-[11px] font-medium text-slate-400">Supported:</span>
+                                    {(tmpl.tradingPairs && tmpl.tradingPairs.length > 0 ? tmpl.tradingPairs : DEFAULT_BOT_TRADING_PAIRS).map((pairKey: string) => (
+                                      <TradingPairBadge key={pairKey} pair={pairKey} isLightTheme={isLightTheme} size="sm" />
+                                    ))}
                                   </div>
 
                                   <div className="pt-1">
@@ -5252,10 +5112,10 @@ export default function StandardUserDashboard({
                                         setBotSelectedPair(defaultPair);
                                         setBotDurationSeconds(60);
                                       }}
-                                      className="w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 shadow-md bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-amber-950 font-black shadow-amber-500/25 active:scale-[0.98]"
+                                      className="w-full py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 shadow-xs bg-emerald-500 hover:bg-emerald-600 text-white active:scale-[0.99]"
                                     >
-                                      <Zap size={16} className="fill-current" />
-                                      SET UP & RUN
+                                      <Zap size={15} />
+                                      Configure & Run Strategy
                                     </button>
                                   </div>
                                 </div>
@@ -5263,8 +5123,8 @@ export default function StandardUserDashboard({
 
                             {(botTemplates.length > 0 ? botTemplates : BOT_TEMPLATES)
                               .filter(tmpl => (tmpl.category || '').toUpperCase() === 'PREMIUM' || (!tmpl.category || tmpl.category.toUpperCase() !== 'FREE')).length === 0 && (
-                                <div className="text-center py-12 px-4 border rounded-3xl select-none text-zinc-400 text-xs">
-                                  No Premium category bots found.
+                                <div className="text-center py-12 px-4 border border-slate-200 rounded-3xl select-none text-slate-400 text-xs">
+                                  No Premium category strategies found.
                                 </div>
                             )}
                           </div>
@@ -5273,19 +5133,22 @@ export default function StandardUserDashboard({
 
                       {/* PAGE 2: FREE BOTS */}
                       {botHubView === 'FREE' && (
-                        <div className={`border rounded-3xl p-5 space-y-4 ${
-                          isLightTheme ? 'bg-white border-zinc-200/80 shadow-xs' : 'bg-slate-800 border-slate-700/80'
+                        <div className={`border rounded-3xl p-5 sm:p-6 space-y-5 ${
+                          isLightTheme ? 'bg-white border-slate-200/90 shadow-xs' : 'bg-slate-900 border-slate-800'
                         }`}>
-                          <div className="flex justify-between items-center select-none">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                             <div>
-                              <h3 className={`text-sm font-black tracking-tight flex items-center gap-1.5 ${isLightTheme ? 'text-zinc-800' : 'text-zinc-200'}`}>
+                              <h3 className={`text-base font-bold tracking-tight flex items-center gap-2 ${isLightTheme ? 'text-slate-900' : 'text-white'}`}>
                                 <Gift size={18} className="text-emerald-500" />
-                                FREE BOTS
+                                Automated Dollar-Cost Averaging
                               </h3>
-                              <p className={`text-xs mt-0.5 ${isLightTheme ? 'text-zinc-400' : 'text-zinc-400'}`}>
-                                Free algorithmic trading bots available to all account tiers.
+                              <p className={`text-xs mt-0.5 ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                Free algorithmic bots available to all account tiers for steady capital accumulation.
                               </p>
                             </div>
+                            <span className="text-xs font-mono text-emerald-600 font-semibold self-start sm:self-auto">
+                              Zero Fee Tier
+                            </span>
                           </div>
 
                           <div className="grid grid-cols-1 gap-4">
@@ -5295,104 +5158,82 @@ export default function StandardUserDashboard({
                               .map((tmpl) => (
                                 <div 
                                   key={tmpl.id}
-                                  className={`p-4 sm:p-5 rounded-3xl border flex flex-col justify-between transition-all duration-300 space-y-4 relative overflow-hidden group ${
+                                  className={`p-5 sm:p-6 rounded-3xl border transition-all duration-200 space-y-4 ${
                                     isLightTheme 
-                                      ? 'bg-gradient-to-br from-white via-emerald-50/20 to-teal-50/30 border-emerald-200/90 hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/10' 
-                                      : 'bg-gradient-to-br from-slate-900/90 via-slate-850 to-slate-900 border-slate-700/80 hover:border-emerald-500/60 hover:shadow-xl'
+                                      ? 'bg-slate-50/50 hover:bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-md' 
+                                      : 'bg-slate-950/60 hover:bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-lg'
                                   }`}
                                 >
-                                  {/* Top accent shine line */}
-                                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 opacity-80" />
-
-                                  <div className="space-y-3.5">
-                                    {/* Card Header */}
-                                    <div className="flex items-start justify-between gap-3 pt-1">
-                                      <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/25 group-hover:scale-105 transition-transform duration-200">
-                                          <Gift size={20} className="drop-shadow-xs" />
-                                        </div>
-                                        <div>
-                                          <h4 className={`text-sm sm:text-base font-black tracking-tight leading-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors ${
-                                            isLightTheme ? 'text-zinc-900' : 'text-white'
-                                          }`}>
-                                            {tmpl.name}
-                                          </h4>
-                                          <p className={`text-[10px] sm:text-xs mt-0.5 font-medium line-clamp-1 ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                            {tmpl.description || 'Automated low-risk Dollar-Cost Averaging strategy'}
-                                          </p>
-                                        </div>
+                                  {/* Card Header */}
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-3.5">
+                                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+                                        isLightTheme 
+                                          ? 'bg-emerald-50 border-emerald-200/70 text-emerald-600 shadow-2xs' 
+                                          : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-2xs'
+                                      }`}>
+                                        <Gift size={20} />
                                       </div>
-
-                                      <span className={`px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-mono font-black uppercase tracking-wider shrink-0 border flex items-center gap-1 ${
-                                        isLightTheme ? 'bg-emerald-100/90 text-emerald-950 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                      }`}>
-                                        <Gift size={10} className="text-emerald-600" />
-                                        FREE
-                                      </span>
-                                    </div>
-
-                                    {/* 2-Column Key Metrics Grid */}
-                                    <div className="grid grid-cols-2 gap-2.5">
-                                      <div className={`p-3 rounded-2xl border flex flex-col justify-between ${
-                                        isLightTheme ? 'bg-white/90 border-emerald-100/80 shadow-2xs' : 'bg-slate-950/70 border-slate-800'
-                                      }`}>
-                                        <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-zinc-500 dark:text-zinc-400">
-                                          <TrendingUp size={13} className="text-emerald-500 shrink-0" />
-                                          <span>Win Ratio</span>
-                                        </div>
-                                        <div className="mt-1 flex items-baseline gap-1">
-                                          <span className="text-sm sm:text-base font-mono font-black text-emerald-600 dark:text-emerald-400">
-                                            {tmpl.winRatioRange || '94-99%'}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      <div className={`p-3 rounded-2xl border flex flex-col justify-between ${
-                                        isLightTheme ? 'bg-white/90 border-emerald-100/80 shadow-2xs' : 'bg-slate-950/70 border-slate-800'
-                                      }`}>
-                                        <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-zinc-500 dark:text-zinc-400">
-                                          <Coins size={13} className="text-amber-500 shrink-0" />
-                                          <span>Min Capital</span>
-                                        </div>
-                                        <div className="mt-1 flex items-baseline gap-1">
-                                          <span className={`text-base sm:text-lg font-mono font-black ${
-                                            isLightTheme ? 'text-zinc-950' : 'text-white'
-                                          }`}>
-                                            {getTemplateMinCapital(tmpl)}
-                                          </span>
-                                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">USDT</span>
-                                        </div>
+                                      <div>
+                                        <h4 className={`text-base font-bold tracking-tight ${
+                                          isLightTheme ? 'text-slate-900' : 'text-white'
+                                        }`}>
+                                          {tmpl.name}
+                                        </h4>
+                                        <p className={`text-xs mt-0.5 line-clamp-2 ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                          {tmpl.description || 'Automated low-risk Dollar-Cost Averaging strategy'}
+                                        </p>
                                       </div>
                                     </div>
 
-                                    {/* Risk & Execution Bar */}
-                                    <div className={`px-3 py-2 rounded-xl border flex items-center justify-between text-[11px] font-bold ${
-                                      isLightTheme ? 'bg-emerald-50/50 border-emerald-200/50 text-zinc-700' : 'bg-slate-900/50 border-slate-800 text-zinc-300'
+                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-semibold uppercase tracking-wider shrink-0 border ${
+                                      isLightTheme ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                                     }`}>
-                                      <div className="flex items-center gap-1.5">
-                                        <ShieldCheck size={13} className="text-emerald-500" />
-                                        <span className="text-zinc-400 font-normal">Risk Profile:</span>
-                                        <span className="font-mono font-black text-emerald-700 dark:text-emerald-300">
-                                          {tmpl.riskLevel || 'Very Low Risk'}
+                                      Free Starter
+                                    </span>
+                                  </div>
+
+                                  {/* 3-Column Key Metrics Grid */}
+                                  <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                                    <div className={`p-3 rounded-2xl border ${
+                                      isLightTheme ? 'bg-white border-slate-200/80' : 'bg-slate-900/80 border-slate-800'
+                                    }`}>
+                                      <span className="text-[11px] font-medium text-slate-500 block">Win Ratio</span>
+                                      <span className="text-sm sm:text-base font-mono font-bold text-emerald-600 block mt-0.5">
+                                        {tmpl.winRatioRange || '94-99%'}
+                                      </span>
+                                    </div>
+
+                                    <div className={`p-3 rounded-2xl border ${
+                                      isLightTheme ? 'bg-white border-slate-200/80' : 'bg-slate-900/80 border-slate-800'
+                                    }`}>
+                                      <span className="text-[11px] font-medium text-slate-500 block">Min Capital</span>
+                                      <div className="flex items-baseline gap-1 mt-0.5">
+                                        <span className={`text-sm sm:text-base font-mono font-bold ${
+                                          isLightTheme ? 'text-slate-900' : 'text-white'
+                                        }`}>
+                                          {getTemplateMinCapital(tmpl)}
                                         </span>
-                                      </div>
-                                      <div className="flex items-center gap-1 font-mono text-[10px] text-zinc-400">
-                                        <Zap size={11} className="text-emerald-500 fill-emerald-500/20" />
-                                        <span>Auto DCA</span>
+                                        <span className="text-[10px] font-medium text-slate-500">USDT</span>
                                       </div>
                                     </div>
 
-                                    {/* Supported Trading Pairs Badges */}
-                                    <div className="space-y-1.5 pt-1">
-                                      <span className={`text-[10px] font-bold uppercase tracking-wider block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                        Trading Pairs
+                                    <div className={`p-3 rounded-2xl border ${
+                                      isLightTheme ? 'bg-white border-slate-200/80' : 'bg-slate-900/80 border-slate-800'
+                                    }`}>
+                                      <span className="text-[11px] font-medium text-slate-500 block">Risk Profile</span>
+                                      <span className="text-xs sm:text-sm font-mono font-medium text-slate-700 dark:text-slate-300 block mt-0.5 truncate">
+                                        {tmpl.riskLevel || 'Very Low Risk'}
                                       </span>
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        {(tmpl.tradingPairs && tmpl.tradingPairs.length > 0 ? tmpl.tradingPairs : DEFAULT_BOT_TRADING_PAIRS).map((pairKey: string) => (
-                                          <TradingPairBadge key={pairKey} pair={pairKey} isLightTheme={isLightTheme} size="sm" />
-                                        ))}
-                                      </div>
                                     </div>
+                                  </div>
+
+                                  {/* Supported Trading Pairs */}
+                                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                                    <span className="text-[11px] font-medium text-slate-400">Supported:</span>
+                                    {(tmpl.tradingPairs && tmpl.tradingPairs.length > 0 ? tmpl.tradingPairs : DEFAULT_BOT_TRADING_PAIRS).map((pairKey: string) => (
+                                      <TradingPairBadge key={pairKey} pair={pairKey} isLightTheme={isLightTheme} size="sm" />
+                                    ))}
                                   </div>
 
                                   <div className="pt-1">
@@ -5406,10 +5247,10 @@ export default function StandardUserDashboard({
                                         setBotSelectedPair(defaultPair);
                                         setBotDurationSeconds(60);
                                       }}
-                                      className="w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 shadow-md bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black shadow-emerald-500/25 active:scale-[0.98]"
+                                      className="w-full py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 shadow-xs bg-emerald-500 hover:bg-emerald-600 text-white active:scale-[0.99]"
                                     >
-                                      <Zap size={16} className="fill-current" />
-                                      SET UP & RUN
+                                      <Zap size={15} />
+                                      Configure & Run Strategy
                                     </button>
                                   </div>
                                 </div>
@@ -5417,8 +5258,8 @@ export default function StandardUserDashboard({
 
                             {(botTemplates.length > 0 ? botTemplates : BOT_TEMPLATES)
                               .filter(tmpl => (tmpl.category || '').toUpperCase() === 'FREE').length === 0 && (
-                                <div className="text-center py-12 px-4 border rounded-3xl select-none text-zinc-400 text-xs">
-                                  No Free category bots found.
+                                <div className="text-center py-12 px-4 border border-slate-200 rounded-3xl select-none text-slate-400 text-xs">
+                                  No Free category strategies found.
                                 </div>
                             )}
                           </div>
@@ -5490,138 +5331,88 @@ export default function StandardUserDashboard({
                         const winRate = botHistoryItems.length > 0 ? ((winCount / botHistoryItems.length) * 100).toFixed(1) : '0.0';
 
                         return (
-                          <div className={`border rounded-3xl p-5 sm:p-6 space-y-5 shadow-md relative overflow-hidden transition-all ${
-                            isLightTheme ? 'bg-white/95 border-zinc-200/90 shadow-zinc-200/50' : 'bg-slate-800/95 border-slate-700/80 shadow-slate-950/40'
+                          <div className={`border rounded-3xl p-5 sm:p-6 space-y-5 ${
+                            isLightTheme ? 'bg-white border-slate-200/90 shadow-xs' : 'bg-slate-900 border-slate-800'
                           }`}>
-                            {/* Decorative background glow */}
-                            <div className="absolute -top-20 -right-20 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
                             {/* Header Row */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 select-none pb-1 relative z-10">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                               <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm shrink-0 ${
-                                  isLightTheme ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-indigo-500/20' : 'bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-indigo-900/40'
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${
+                                  isLightTheme ? 'bg-indigo-50 border-indigo-200/70 text-indigo-600' : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400'
                                 }`}>
-                                  <History size={20} />
+                                  <History size={18} />
                                 </div>
                                 <div>
-                                  <div className="flex items-center gap-2">
-                                    <h3 className={`text-base font-black tracking-tight ${isLightTheme ? 'text-zinc-900' : 'text-zinc-100'}`}>
-                                      BOT TRADE HISTORY
-                                    </h3>
-                                  </div>
-                                  <p className={`text-xs mt-0.5 font-medium ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                    Real-time execution log of trading bot profits & losses
+                                  <h3 className={`text-base font-bold tracking-tight ${isLightTheme ? 'text-slate-900' : 'text-white'}`}>
+                                    Algorithmic Trade Executions
+                                  </h3>
+                                  <p className={`text-xs mt-0.5 ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    Real-time ledger of trade profits and losses across your active strategies
                                   </p>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-2 self-start sm:self-auto">
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                                  isLightTheme ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30'
-                                }`}>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                  Live Ticker
-                                </span>
-                              </div>
+                              <span className="text-xs font-mono text-slate-500 self-start sm:self-auto">
+                                Live Audit Feed
+                              </span>
                             </div>
 
                             {/* Summary Performance Cards */}
                             {botHistoryItems.length > 0 && (
-                              <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 relative z-10">
+                              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                                 {/* Net P&L Card */}
-                                <div className={`p-3 sm:p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between ${
-                                  isLightTheme 
-                                    ? totalNetPnL >= 0 
-                                      ? 'bg-gradient-to-br from-emerald-50/80 via-teal-50/40 to-white border-emerald-200/90 shadow-xs' 
-                                      : 'bg-gradient-to-br from-rose-50/80 via-pink-50/40 to-white border-rose-200/90 shadow-xs'
-                                    : totalNetPnL >= 0 
-                                      ? 'bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-900 border-emerald-500/30 shadow-xs' 
-                                      : 'bg-gradient-to-br from-rose-950/30 via-slate-900 to-slate-900 border-rose-500/30 shadow-xs'
+                                <div className={`p-3.5 sm:p-4 rounded-2xl border ${
+                                  isLightTheme ? 'bg-slate-50/70 border-slate-200/80' : 'bg-slate-950/60 border-slate-800'
                                 }`}>
-                                  <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider truncate block ${
-                                    isLightTheme ? 'text-zinc-500' : 'text-zinc-400'
-                                  }`}>
-                                    NET P&L
+                                  <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">
+                                    Net Realized PnL
                                   </span>
-                                  <div className="mt-1 flex items-baseline gap-1 flex-wrap">
-                                    <span className={`text-sm sm:text-lg font-black font-mono tracking-tight ${
-                                      totalNetPnL >= 0 
-                                        ? isLightTheme ? 'text-emerald-700' : 'text-emerald-400' 
-                                        : isLightTheme ? 'text-rose-700' : 'text-rose-400'
+                                  <div className="mt-1 flex items-baseline gap-1">
+                                    <span className={`text-sm sm:text-lg font-mono font-bold tracking-tight ${
+                                      totalNetPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                                     }`}>
                                       {totalNetPnL >= 0 ? '+' : ''}${totalNetPnL.toFixed(2)}
                                     </span>
-                                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                                      totalNetPnL >= 0
-                                        ? isLightTheme ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-900/50 text-emerald-300'
-                                        : isLightTheme ? 'bg-rose-100 text-rose-800' : 'bg-rose-900/50 text-rose-300'
-                                    }`}>
-                                      USDT
-                                    </span>
+                                    <span className="text-[10px] font-medium text-slate-500">USDT</span>
                                   </div>
                                 </div>
 
                                 {/* Win Rate Card */}
-                                <div className={`p-3 sm:p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between ${
-                                  isLightTheme 
-                                    ? 'bg-gradient-to-br from-indigo-50/80 via-violet-50/40 to-white border-indigo-200/90 shadow-xs' 
-                                    : 'bg-gradient-to-br from-indigo-950/30 via-slate-900 to-slate-900 border-indigo-500/30 shadow-xs'
+                                <div className={`p-3.5 sm:p-4 rounded-2xl border ${
+                                  isLightTheme ? 'bg-slate-50/70 border-slate-200/80' : 'bg-slate-950/60 border-slate-800'
                                 }`}>
-                                  <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider truncate block ${
-                                    isLightTheme ? 'text-zinc-500' : 'text-zinc-400'
-                                  }`}>
-                                    WIN RATE
+                                  <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">
+                                    Accuracy
                                   </span>
                                   <div className="mt-1 flex items-baseline justify-between gap-1">
-                                    <span className={`text-sm sm:text-lg font-black font-mono tracking-tight ${
-                                      isLightTheme ? 'text-indigo-700' : 'text-indigo-400'
-                                    }`}>
+                                    <span className="text-sm sm:text-lg font-mono font-bold text-slate-900 dark:text-white tracking-tight">
                                       {winRate}%
                                     </span>
-                                    <span className={`text-[9px] font-bold font-mono ${isLightTheme ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                    <span className="text-[10px] font-mono text-slate-400">
                                       {winCount}/{botHistoryItems.length}
                                     </span>
                                   </div>
                                 </div>
 
                                 {/* Executions Card */}
-                                <div className={`p-3 sm:p-4 rounded-2xl border transition-all relative overflow-hidden flex flex-col justify-between ${
-                                  isLightTheme 
-                                    ? 'bg-gradient-to-br from-zinc-50 via-slate-50 to-white border-zinc-200/90 shadow-xs' 
-                                    : 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border-slate-700/80 shadow-xs'
+                                <div className={`p-3.5 sm:p-4 rounded-2xl border ${
+                                  isLightTheme ? 'bg-slate-50/70 border-slate-200/80' : 'bg-slate-950/60 border-slate-800'
                                 }`}>
-                                  <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider truncate block ${
-                                    isLightTheme ? 'text-zinc-500' : 'text-zinc-400'
-                                  }`}>
-                                    LOGS
+                                  <span className="text-[11px] font-medium text-slate-500 block uppercase tracking-wider">
+                                    Executions
                                   </span>
                                   <div className="mt-1 flex items-baseline gap-1">
-                                    <span className={`text-sm sm:text-lg font-black font-mono tracking-tight ${
-                                      isLightTheme ? 'text-zinc-900' : 'text-white'
-                                    }`}>
+                                    <span className="text-sm sm:text-lg font-mono font-bold text-slate-900 dark:text-white tracking-tight">
                                       {botHistoryItems.length}
                                     </span>
-                                    <span className={`text-[9px] font-bold ${isLightTheme ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                                      trades
-                                    </span>
+                                    <span className="text-[10px] font-medium text-slate-400">orders</span>
                                   </div>
                                 </div>
                               </div>
                             )}
 
-                            {/* Section Header for Executions */}
-                            <div className="flex items-center justify-between pt-1 select-none relative z-10">
-                              <span className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                                isLightTheme ? 'text-zinc-500' : 'text-zinc-400'
-                              }`}>
-                                <Activity size={13} className="text-indigo-500" />
-                                Execution History
-                              </span>
-                            </div>
-
                             {/* Trade Log Items */}
-                            <div className="space-y-2.5 relative z-10">
+                            <div className="space-y-2">
                               {botHistoryItems.map(item => {
                                 const isWin = item.isWin;
                                 const amt = item.amount;
@@ -5629,49 +5420,41 @@ export default function StandardUserDashboard({
                                 return (
                                   <div 
                                     key={item.id}
-                                    className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 relative overflow-hidden group ${
+                                    className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-150 flex items-center justify-between gap-3 ${
                                       isLightTheme 
-                                        ? 'bg-zinc-50/90 border-zinc-200/80 hover:bg-white hover:border-indigo-300 hover:shadow-md' 
-                                        : 'bg-slate-900/70 border-slate-700/70 hover:bg-slate-900 hover:border-indigo-500/50 hover:shadow-lg'
+                                        ? 'bg-slate-50/40 border-slate-200/80 hover:bg-white hover:border-slate-300 hover:shadow-xs' 
+                                        : 'bg-slate-950/40 border-slate-800 hover:bg-slate-900 hover:border-slate-700'
                                     }`}
                                   >
-                                    {/* Left Status Stripe */}
-                                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                                      isWin ? 'bg-emerald-500' : 'bg-rose-500'
-                                    }`} />
-
-                                    <div className="flex items-center gap-3 pl-1">
-                                      {/* Icon Container */}
-                                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ${
+                                    <div className="flex items-center gap-3">
+                                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
                                         isWin 
-                                          ? isLightTheme ? 'bg-emerald-100 text-emerald-800 border border-emerald-300/80' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                                          : isLightTheme ? 'bg-rose-100 text-rose-800 border border-rose-300/80' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                          ? isLightTheme ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                          : isLightTheme ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
                                       }`}>
-                                        {isWin ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                                        {isWin ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
                                       </div>
 
-                                      {/* Pair & Status Badge */}
                                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5">
                                         <TradingPairBadge pair={item.tradingPair} isLightTheme={isLightTheme} size="sm" showName />
-                                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-mono font-bold uppercase tracking-wider border w-fit flex items-center gap-1 ${
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-semibold uppercase tracking-wider border w-fit ${
                                           isWin
-                                            ? isLightTheme ? 'bg-emerald-100/90 text-emerald-900 border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                                            : isLightTheme ? 'bg-rose-100/90 text-rose-900 border-rose-300' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                                            ? isLightTheme ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80' : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                                            : isLightTheme ? 'bg-rose-50 text-rose-700 border-rose-200/80' : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
                                         }`}>
-                                          <span className={`w-1 h-1 rounded-full ${isWin ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                                          {isWin ? 'WIN' : 'LOSS'}
+                                          {isWin ? 'PROFIT' : 'LOSS'}
                                         </span>
                                       </div>
                                     </div>
 
                                     {/* Amount */}
                                     <div className="text-right shrink-0">
-                                      <span className={`text-sm sm:text-base font-black font-mono block ${
+                                      <span className={`text-sm sm:text-base font-mono font-bold block ${
                                         isWin 
-                                          ? isLightTheme ? 'text-emerald-600' : 'text-emerald-400' 
-                                          : isLightTheme ? 'text-rose-600' : 'text-rose-400'
+                                          ? 'text-emerald-600 dark:text-emerald-400' 
+                                          : 'text-rose-600 dark:text-rose-400'
                                       }`}>
-                                        {isWin ? '+' : ''}${amt.toFixed(2)} <span className="text-[10px] font-bold text-zinc-400 font-sans">USDT</span>
+                                        {isWin ? '+' : ''}${amt.toFixed(2)} <span className="text-[10px] font-normal text-slate-400 font-sans">USDT</span>
                                       </span>
                                     </div>
                                   </div>
@@ -5679,15 +5462,15 @@ export default function StandardUserDashboard({
                               })}
 
                               {botHistoryItems.length === 0 && (
-                                <div className={`text-center py-12 px-4 border rounded-2xl select-none relative overflow-hidden ${
-                                  isLightTheme ? 'bg-zinc-50/50 border-zinc-200/60' : 'bg-slate-900/40 border-slate-800/80'
+                                <div className={`text-center py-12 px-4 border rounded-2xl select-none ${
+                                  isLightTheme ? 'bg-slate-50/50 border-slate-200/80' : 'bg-slate-950/40 border-slate-800'
                                 }`}>
-                                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto mb-3">
-                                    <History size={24} />
+                                  <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-200/60 text-indigo-600 flex items-center justify-center mx-auto mb-3">
+                                    <History size={20} />
                                   </div>
-                                  <p className={`text-xs font-black ${isLightTheme ? 'text-zinc-800' : 'text-zinc-200'}`}>No bot trade executions recorded yet.</p>
-                                  <p className={`text-[11px] mt-1 max-w-[280px] mx-auto ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                    Run a bot strategy to track your profits and losses on each trade execution here.
+                                  <p className={`text-xs font-bold ${isLightTheme ? 'text-slate-900' : 'text-slate-100'}`}>No bot trade executions recorded yet</p>
+                                  <p className={`text-xs mt-1 max-w-[280px] mx-auto ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    Deploy a strategy to track automated order fills and profit distributions here.
                                   </p>
                                 </div>
                               )}
@@ -5698,19 +5481,22 @@ export default function StandardUserDashboard({
 
                       {/* PAGE 4: MY BOTS */}
                       {botHubView === 'MY_BOTS' && (
-                        <div className={`border rounded-3xl p-5 space-y-4 ${
-                          isLightTheme ? 'bg-white border-zinc-200/80 shadow-xs' : 'bg-slate-800 border-slate-700/80'
+                        <div className={`border rounded-3xl p-5 sm:p-6 space-y-5 ${
+                          isLightTheme ? 'bg-white border-slate-200/90 shadow-xs' : 'bg-slate-900 border-slate-800'
                         }`}>
-                          <div className="flex justify-between items-center select-none">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                             <div>
-                              <h3 className={`text-sm font-black tracking-tight flex items-center gap-1.5 ${isLightTheme ? 'text-zinc-800' : 'text-zinc-200'}`}>
+                              <h3 className={`text-base font-bold tracking-tight flex items-center gap-2 ${isLightTheme ? 'text-slate-900' : 'text-white'}`}>
                                 <Bot size={18} className="text-blue-500" />
-                                MY BOTS ({userBots.filter(b => b.status !== 'STOPPED').length})
+                                Active Strategy Instances ({userBots.filter(b => b.status !== 'STOPPED').length})
                               </h3>
-                              <p className={`text-xs mt-0.5 ${isLightTheme ? 'text-zinc-400' : 'text-zinc-400'}`}>
-                                Manage your active trading bots, monitor live profits, and harvest or withdraw anytime.
+                              <p className={`text-xs mt-0.5 ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                Monitor running bots, inspect live tick data, and manage capital allocation.
                               </p>
                             </div>
+                            <span className="text-xs font-mono text-slate-500 self-start sm:self-auto">
+                              Capital In-Flight
+                            </span>
                           </div>
 
                           <div className="space-y-3">
@@ -5719,101 +5505,98 @@ export default function StandardUserDashboard({
                               return (
                               <div 
                                 key={bot.id} 
-                                className={`p-4 sm:p-5 rounded-3xl border transition-all duration-300 relative overflow-hidden space-y-3.5 ${
+                                className={`p-5 sm:p-6 rounded-3xl border transition-all duration-200 space-y-4 ${
                                   isLightTheme 
-                                    ? 'bg-gradient-to-br from-white via-blue-50/15 to-indigo-50/20 border-zinc-200/90 hover:border-blue-400 hover:shadow-lg' 
-                                    : 'bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border-slate-700/80 hover:border-blue-500/50 hover:shadow-lg'
+                                    ? 'bg-slate-50/50 hover:bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-md' 
+                                    : 'bg-slate-950/60 hover:bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-lg'
                                 }`}
                               >
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                                  <div className="flex items-center gap-3.5">
+                                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${
                                       isOfflineActive
-                                        ? 'bg-gradient-to-tr from-rose-600 to-pink-600 text-white shadow-rose-500/25'
+                                        ? 'bg-rose-50 border-rose-200/70 text-rose-600'
                                         : bot.status === 'RUNNING'
-                                          ? 'bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-blue-500/25'
-                                          : 'bg-gradient-to-tr from-amber-500 to-yellow-500 text-white shadow-amber-500/25'
+                                          ? 'bg-emerald-50 border-emerald-200/70 text-emerald-600'
+                                          : 'bg-amber-50 border-amber-200/70 text-amber-600'
                                     }`}>
-                                      <Bot size={20} className="drop-shadow-xs" />
+                                      <Bot size={20} />
                                     </div>
                                     <div>
                                       <div className="flex items-center gap-2">
-                                        <h4 className={`text-sm font-black tracking-tight ${isLightTheme ? 'text-zinc-900' : 'text-white'}`}>
+                                        <h4 className={`text-base font-bold tracking-tight ${isLightTheme ? 'text-slate-900' : 'text-white'}`}>
                                           {bot.name}
                                         </h4>
-                                        <span className={`text-[9px] px-2.5 py-0.5 rounded-full font-mono font-black uppercase tracking-wider border flex items-center gap-1 ${
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-semibold uppercase tracking-wider border ${
                                           isOfflineActive
-                                            ? isLightTheme ? 'bg-rose-100/90 border-rose-300 text-rose-900' : 'bg-rose-500/20 border-rose-500/40 text-rose-300'
+                                            ? isLightTheme ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
                                             : bot.status === 'RUNNING'
-                                              ? isLightTheme ? 'bg-emerald-100/90 border-emerald-300 text-emerald-900' : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
-                                              : isLightTheme ? 'bg-amber-100/90 border-amber-300 text-amber-900' : 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                                              ? isLightTheme ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                                              : isLightTheme ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-amber-500/15 border-amber-500/30 text-amber-300'
                                         }`}>
-                                          <span className={`w-1.5 h-1.5 rounded-full ${isOfflineActive ? 'bg-rose-500' : bot.status === 'RUNNING' ? 'bg-emerald-500 animate-ping' : 'bg-amber-500'}`} />
                                           {isOfflineActive ? 'OFFLINE' : bot.status}
                                         </span>
                                       </div>
                                       <div className="flex items-center gap-2 mt-0.5">
-                                        <span className={`text-[11px] font-mono font-bold ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                                          Capital: <strong className="text-zinc-900 dark:text-white font-black">${isOfflineActive ? 0 : bot.capital.toLocaleString()}</strong> ({bot.coinSymbol || 'USDT'})
+                                        <span className={`text-xs font-mono ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                          Capital: <strong className="text-slate-900 dark:text-white font-bold">${isOfflineActive ? 0 : bot.capital.toLocaleString()}</strong> ({bot.coinSymbol || 'USDT'})
                                         </span>
-                                        <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                                        <span className="text-slate-300 dark:text-slate-700">·</span>
                                         <TradingPairBadge pair={bot.tradingPair || 'XAUUSD'} isLightTheme={isLightTheme} size="sm" />
                                       </div>
                                     </div>
                                   </div>
 
-                                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-slate-800">
-                                    <div className="text-left sm:text-right">
-                                      <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold block">
-                                        {(isOfflineActive ? 0 : (bot.accruedProfit || 0)) < 0 ? 'Accrued Loss' : 'Accrued Profit'}
-                                      </span>
-                                      <span className={`text-base font-black font-mono ${
-                                        (isOfflineActive ? 0 : (bot.accruedProfit || 0)) >= 0 
-                                          ? (isLightTheme ? 'text-emerald-600' : 'text-emerald-400')
-                                          : (isLightTheme ? 'text-rose-600' : 'text-rose-400')
-                                      }`}>
-                                        {isOfflineActive ? '+$0.00' : `${(bot.accruedProfit || 0) >= 0 ? '+' : ''}$${(bot.accruedProfit || 0).toFixed(2)}`}
-                                      </span>
-                                    </div>
+                                  <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800">
+                                    <span className="text-[11px] font-medium text-slate-500 block">
+                                      {(isOfflineActive ? 0 : (bot.accruedProfit || 0)) < 0 ? 'Accrued Loss' : 'Accrued Profit'}
+                                    </span>
+                                    <span className={`text-base font-mono font-bold ${
+                                      (isOfflineActive ? 0 : (bot.accruedProfit || 0)) >= 0 
+                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                        : 'text-rose-600 dark:text-rose-400'
+                                    }`}>
+                                      {isOfflineActive ? '+$0.00' : `${(bot.accruedProfit || 0) >= 0 ? '+' : ''}$${(bot.accruedProfit || 0).toFixed(2)}`}
+                                    </span>
                                   </div>
                                 </div>
 
-                                <div className={`pt-3 border-t flex flex-wrap items-center justify-between gap-2 ${
-                                  isLightTheme ? 'border-zinc-200/60' : 'border-slate-800'
+                                <div className={`pt-3.5 border-t flex flex-wrap items-center justify-between gap-2 ${
+                                  isLightTheme ? 'border-slate-200/80' : 'border-slate-800'
                                 }`}>
                                   <div className="flex items-center gap-2">
                                     <button
                                       type="button"
                                       onClick={() => setActiveRunningBot(bot)}
-                                      className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-xs"
+                                      className="px-3.5 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xs active:scale-[0.99]"
                                     >
-                                      <Activity size={12} />
-                                      View Live Bot
+                                      <Activity size={13} />
+                                      View Live Execution
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => handleToggleBotStatus(bot)}
-                                      className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer border transition-all ${
+                                      className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer border transition-all ${
                                         isLightTheme 
-                                          ? 'bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-100' 
+                                          ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900' 
                                           : 'bg-slate-800 border-slate-700 text-zinc-300 hover:bg-slate-750'
                                       }`}
                                     >
-                                      {bot.status === 'RUNNING' ? <Pause size={11} /> : <Play size={11} />}
-                                      {bot.status === 'RUNNING' ? 'Pause' : 'Resume'}
+                                      {bot.status === 'RUNNING' ? <Pause size={12} /> : <Play size={12} />}
+                                      <span>{bot.status === 'RUNNING' ? 'Pause' : 'Resume'}</span>
                                     </button>
                                   </div>
 
                                   <button
                                     type="button"
                                     onClick={() => handleStopBot(bot)}
-                                    className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider cursor-pointer border transition-all ${
+                                    className={`px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer border transition-all ${
                                       isLightTheme 
                                         ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100' 
                                         : 'bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20'
                                     }`}
                                   >
-                                    Stop & Withdraw Capital
+                                    Stop & Withdraw
                                   </button>
                                 </div>
                               </div>
@@ -5821,34 +5604,34 @@ export default function StandardUserDashboard({
                           })}
 
                             {userBots.filter(b => b.status !== 'STOPPED').length === 0 && (
-                              <div className={`text-center py-10 px-4 border rounded-2xl select-none ${
-                                isLightTheme ? 'bg-zinc-50/50 border-zinc-200/60' : 'bg-slate-900/40 border-slate-800/80'
+                              <div className={`text-center py-12 px-4 border rounded-3xl select-none ${
+                                isLightTheme ? 'bg-slate-50/50 border-slate-200/80' : 'bg-slate-950/40 border-slate-800'
                               }`}>
-                                <div className={`w-12 h-12 rounded-2xl mx-auto flex items-center justify-center mb-3 ${
-                                  isLightTheme ? 'bg-blue-100 text-blue-600' : 'bg-blue-500/10 text-blue-400'
+                                <div className={`w-11 h-11 rounded-2xl mx-auto flex items-center justify-center mb-3 border ${
+                                  isLightTheme ? 'bg-blue-50 border-blue-200/60 text-blue-600' : 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                                 }`}>
-                                  <Bot size={22} />
+                                  <Bot size={20} />
                                 </div>
-                                <p className={`text-xs font-bold ${isLightTheme ? 'text-zinc-700' : 'text-zinc-300'}`}>You have no active automated bots.</p>
-                                <p className={`text-[10px] mt-1 max-w-[280px] mx-auto ${isLightTheme ? 'text-zinc-400' : 'text-zinc-400'}`}>
-                                  Explore Premium or Free bot categories to deploy your capital and start earning automated returns.
+                                <p className={`text-xs font-bold ${isLightTheme ? 'text-slate-900' : 'text-slate-100'}`}>No active strategy instances</p>
+                                <p className={`text-xs mt-1 max-w-[280px] mx-auto ${isLightTheme ? 'text-slate-500' : 'text-slate-400'}`}>
+                                  Explore Premium or Free strategies to deploy your capital and start automated trading.
                                 </p>
-                                <div className="flex items-center justify-center gap-3 mt-4">
+                                <div className="flex items-center justify-center gap-2.5 mt-4">
                                   <button
                                     type="button"
                                     onClick={() => setBotHubView('PREMIUM')}
-                                    className="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-400 transition-all cursor-pointer flex items-center gap-1.5"
+                                    className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                                   >
-                                    <Crown size={14} />
-                                    Premium Bots
+                                    <Crown size={13} className="text-amber-400" />
+                                    Premium Strategies
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => setBotHubView('FREE')}
-                                    className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-400 transition-all cursor-pointer flex items-center gap-1.5"
+                                    className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                                   >
-                                    <Gift size={14} />
-                                    Free Bots
+                                    <Gift size={13} />
+                                    Free Starter
                                   </button>
                                 </div>
                               </div>
@@ -5866,25 +5649,25 @@ export default function StandardUserDashboard({
 
           {/* DEPLOY BOT MODAL */}
           {selectedBotTemplate && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
               <div className={`w-full max-w-md rounded-3xl border p-6 space-y-6 shadow-2xl ${
-                isLightTheme ? 'bg-white border-zinc-200 text-zinc-900' : 'bg-slate-900 border-slate-800 text-white'
+                isLightTheme ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-800 text-white'
               }`}>
-                {/* Header: < Set UP & Run Bot */}
-                <div className="flex justify-between items-center pb-3 border-b border-zinc-200/60 dark:border-slate-800">
-                  <div className="flex items-center gap-2.5">
+                {/* Header */}
+                <div className="flex justify-between items-center pb-3.5 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => setSelectedBotTemplate(null)}
                       className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-                        isLightTheme ? 'hover:bg-zinc-100 text-zinc-700' : 'hover:bg-slate-800 text-zinc-200'
+                        isLightTheme ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-slate-800 text-slate-300'
                       }`}
                     >
-                      <ArrowLeft size={20} />
+                      <ArrowLeft size={18} />
                     </button>
                     <div>
-                      <h3 className="text-lg font-black tracking-tight">Set UP & Run Bot</h3>
-                      <p className={`text-[11px] font-bold ${isLightTheme ? 'text-amber-600' : 'text-emerald-400'}`}>
+                      <h3 className="text-base font-bold tracking-tight">Deploy Strategy</h3>
+                      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                         {selectedBotTemplate.name}
                       </p>
                     </div>
@@ -5892,7 +5675,7 @@ export default function StandardUserDashboard({
                   <button
                     onClick={() => setSelectedBotTemplate(null)}
                     className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-                      isLightTheme ? 'hover:bg-zinc-100 text-zinc-500' : 'hover:bg-slate-800 text-zinc-400'
+                      isLightTheme ? 'hover:bg-slate-100 text-slate-400 hover:text-slate-600' : 'hover:bg-slate-800 text-slate-400 hover:text-white'
                     }`}
                   >
                     <X size={18} />
@@ -5901,11 +5684,11 @@ export default function StandardUserDashboard({
 
                 <div className="space-y-4">
                   {/* Field 1: Choose trading pair */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <label className="text-xs font-bold block">Choose Trading Pair</label>
-                      <span className={`text-[10px] font-mono font-bold ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                        Selected: <strong className={isLightTheme ? 'text-amber-600 font-extrabold' : 'text-emerald-400 font-extrabold'}>{getTradingPairConfig(botSelectedPair).displayCode}</strong>
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Trading Asset Pair</label>
+                      <span className="text-[11px] font-mono text-slate-400">
+                        Selected: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{getTradingPairConfig(botSelectedPair).displayCode}</strong>
                       </span>
                     </div>
 
@@ -5922,41 +5705,39 @@ export default function StandardUserDashboard({
                       <button
                         type="button"
                         onClick={() => setIsPairDropdownOpen(!isPairDropdownOpen)}
-                        className={`w-full p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex items-center justify-between relative z-30 select-none shadow-xs ${
+                        className={`w-full p-3 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex items-center justify-between relative z-30 select-none shadow-xs ${
                           isPairDropdownOpen
-                            ? isLightTheme
-                              ? 'bg-white border-amber-500 ring-2 ring-amber-500/30 shadow-md'
-                              : 'bg-slate-900 border-emerald-500 ring-2 ring-emerald-500/30 shadow-md'
+                            ? 'bg-white dark:bg-slate-900 border-emerald-500 ring-2 ring-emerald-500/20'
                             : isLightTheme
-                              ? 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:border-zinc-300'
+                              ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/70 hover:border-slate-300'
                               : 'bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-slate-700'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${
-                            isLightTheme ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-emerald-500/10 border border-emerald-500/20'
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 border ${
+                            isLightTheme ? 'bg-emerald-50 border-emerald-200/80 text-emerald-700' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                           }`}>
                             {getTradingPairConfig(botSelectedPair).symbol}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-mono font-black tracking-tight">
+                              <span className="text-sm font-mono font-bold tracking-tight">
                                 {getTradingPairConfig(botSelectedPair).displayCode}
                               </span>
-                              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border uppercase ${
-                                isLightTheme ? 'bg-zinc-100 text-zinc-600 border-zinc-200' : 'bg-slate-900 text-zinc-400 border-slate-800'
+                              <span className={`text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded border uppercase ${
+                                isLightTheme ? 'bg-white text-slate-600 border-slate-200' : 'bg-slate-900 text-slate-400 border-slate-800'
                               }`}>
                                 {getTradingPairConfig(botSelectedPair).assetType}
                               </span>
                             </div>
-                            <span className={`text-[11px] font-medium block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                            <span className="text-[11px] text-slate-400 block mt-0.5">
                               {getTradingPairConfig(botSelectedPair).name}
                             </span>
                           </div>
                         </div>
 
-                        <div className={`p-1.5 rounded-lg transition-transform duration-200 ${
-                          isPairDropdownOpen ? 'rotate-180 ' + (isLightTheme ? 'text-amber-600' : 'text-emerald-400') : 'text-zinc-400'
+                        <div className={`p-1.5 rounded-lg transition-transform duration-150 ${
+                          isPairDropdownOpen ? 'rotate-180 text-emerald-600' : 'text-slate-400'
                         }`}>
                           <ChevronDown size={18} />
                         </div>
@@ -5964,10 +5745,10 @@ export default function StandardUserDashboard({
 
                       {/* Custom Floating Popover Menu */}
                       {isPairDropdownOpen && (
-                        <div className={`absolute left-0 right-0 top-full mt-2 z-50 p-1.5 rounded-2xl border shadow-2xl space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 ${
+                        <div className={`absolute left-0 right-0 top-full mt-2 z-50 p-1.5 rounded-2xl border shadow-xl space-y-1 backdrop-blur-xl animate-in fade-in duration-100 ${
                           isLightTheme 
-                            ? 'bg-white/95 border-zinc-200 text-zinc-900 shadow-amber-500/10' 
-                            : 'bg-slate-900/95 border-slate-700 text-white shadow-black/60'
+                            ? 'bg-white border-slate-200 text-slate-900 shadow-slate-900/10' 
+                            : 'bg-slate-900 border-slate-700 text-white shadow-black/60'
                         }`}>
                           {(selectedBotTemplate.tradingPairs && selectedBotTemplate.tradingPairs.length > 0 
                             ? selectedBotTemplate.tradingPairs 
@@ -5987,43 +5768,39 @@ export default function StandardUserDashboard({
                                   setBotSelectedPair(pairKey);
                                   setIsPairDropdownOpen(false);
                                 }}
-                                className={`w-full p-2.5 rounded-xl text-left transition-all duration-150 cursor-pointer flex items-center justify-between border ${
+                                className={`w-full p-2.5 rounded-xl text-left transition-all duration-100 cursor-pointer flex items-center justify-between border ${
                                   isSelected
                                     ? isLightTheme
-                                      ? 'bg-amber-500/10 border-amber-500/40 text-amber-950 font-bold'
-                                      : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold'
+                                      ? 'bg-emerald-50 border-emerald-200 text-slate-900 font-semibold'
+                                      : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-semibold'
                                     : isLightTheme
-                                      ? 'border-transparent hover:bg-zinc-100/80 text-zinc-800'
-                                      : 'border-transparent hover:bg-slate-800/80 text-zinc-200'
+                                      ? 'border-transparent hover:bg-slate-50 text-slate-800'
+                                      : 'border-transparent hover:bg-slate-800/80 text-slate-200'
                                 }`}
                               >
                                 <div className="flex items-center gap-2.5">
                                   <span className="text-lg w-6 text-center">{cfg.symbol}</span>
                                   <div>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-xs font-mono font-extrabold tracking-tight">
+                                      <span className="text-xs font-mono font-bold tracking-tight">
                                         {cfg.displayCode}
                                       </span>
                                     </div>
-                                    <span className={`text-[10px] font-medium block ${
-                                      isSelected
-                                        ? isLightTheme ? 'text-amber-800' : 'text-emerald-400'
-                                        : isLightTheme ? 'text-zinc-500' : 'text-zinc-400'
-                                    }`}>
+                                    <span className="text-[10px] text-slate-400 block">
                                       {cfg.name}
                                     </span>
                                   </div>
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border uppercase ${
-                                    isLightTheme ? 'bg-zinc-100 text-zinc-600 border-zinc-200' : 'bg-slate-950 text-zinc-400 border-slate-800'
+                                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border uppercase ${
+                                    isLightTheme ? 'bg-white text-slate-600 border-slate-200' : 'bg-slate-950 text-slate-400 border-slate-800'
                                   }`}>
                                     {cfg.assetType}
                                   </span>
                                   {isSelected && (
-                                    <div className={`p-0.5 rounded-full ${isLightTheme ? 'bg-amber-500 text-amber-950' : 'bg-emerald-500 text-slate-950'}`}>
-                                      <CheckCircle2 size={13} className="stroke-[3]" />
+                                    <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                                      <CheckCircle2 size={11} className="stroke-[3]" />
                                     </div>
                                   )}
                                 </div>
@@ -6038,37 +5815,67 @@ export default function StandardUserDashboard({
                   {/* Field 2: Investment amount */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <label className="text-xs font-bold block">Investment amount</label>
-                      <span className={`text-[10px] font-mono font-bold ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                        Available: ${Math.max(0, getWalletBalance(profile) - getLockedAmount('USDT')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Capital Allocation</label>
+                      <span className="text-[11px] font-mono text-slate-400">
+                        Available: <strong className="text-slate-900 dark:text-white">${Math.max(0, getWalletBalance(profile) - getLockedAmount('USDT')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                       </span>
                     </div>
+
                     <div className="relative">
-                      <span className="absolute left-3.5 top-3 text-zinc-400 font-bold font-mono text-xs">$</span>
+                      <span className="absolute left-3.5 top-3.5 text-slate-400 font-mono text-xs">$</span>
                       <input
                         type="number"
                         placeholder={`Min ${getTemplateMinCapital(selectedBotTemplate)} USDT`}
                         value={botCapitalInput}
                         onChange={(e) => setBotCapitalInput(e.target.value)}
-                        className={`w-full pl-8 pr-4 py-3 rounded-2xl border text-xs font-mono font-bold focus:outline-none ${
+                        className={`w-full pl-8 pr-4 py-3 rounded-2xl border text-xs font-mono font-bold focus:outline-none transition-all ${
                           isLightTheme 
-                            ? 'bg-zinc-50 border-zinc-300 text-zinc-900 focus:border-amber-500' 
-                            : 'bg-slate-950 border-slate-700 text-white focus:border-emerald-500'
+                            ? 'bg-slate-50/80 border-slate-200 text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20' 
+                            : 'bg-slate-950 border-slate-700 text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20'
                         }`}
                       />
                     </div>
-                    <span className="text-[10px] text-zinc-500 font-mono font-bold block">
-                      Minimum capital: ${getTemplateMinCapital(selectedBotTemplate)} USDT
+
+                    {/* Quick percentage shortcuts */}
+                    {(() => {
+                      const avail = Math.max(0, getWalletBalance(profile) - getLockedAmount('USDT'));
+                      const minCap = getTemplateMinCapital(selectedBotTemplate);
+                      return (
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          {[0.25, 0.5, 0.75, 1].map((pct, idx) => {
+                            const label = pct === 1 ? 'MAX' : `${pct * 100}%`;
+                            const calculated = Math.max(minCap, parseFloat((avail * pct).toFixed(2)));
+                            return (
+                              <button
+                                key={label}
+                                type="button"
+                                onClick={() => setBotCapitalInput(calculated.toString())}
+                                className={`flex-1 py-1 rounded-lg text-[10px] font-mono font-semibold border transition-all cursor-pointer ${
+                                  isLightTheme 
+                                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700' 
+                                    : 'bg-slate-800 hover:bg-slate-750 border-slate-700 text-slate-300'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    <span className="text-[11px] text-slate-400 font-mono block pt-0.5">
+                      Minimum required capital: ${getTemplateMinCapital(selectedBotTemplate)} USDT
                     </span>
                   </div>
 
                   {/* Field 3: Trade duration */}
                   <div className="space-y-2 pt-1">
                     <div className="flex justify-between items-center">
-                      <label className="text-xs font-bold block">Trade duration :</label>
-                      <span className={`px-3 py-1 rounded-xl text-xs font-mono font-black border ${
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">Execution Cycle</label>
+                      <span className={`px-2.5 py-0.5 rounded-md text-xs font-mono font-semibold border ${
                         isLightTheme 
-                          ? 'bg-amber-50 border-amber-200 text-amber-800' 
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
                           : 'bg-emerald-950/40 border-emerald-500/30 text-emerald-400'
                       }`}>
                         {botDurationSeconds} seconds
@@ -6085,39 +5892,35 @@ export default function StandardUserDashboard({
                         value={botDurationSeconds}
                         onChange={(e) => setBotDurationSeconds(parseInt(e.target.value) || 60)}
                         className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${
-                          isLightTheme ? 'bg-zinc-200 accent-amber-500' : 'bg-slate-800 accent-emerald-500'
+                          isLightTheme ? 'bg-slate-200 accent-emerald-500' : 'bg-slate-800 accent-emerald-500'
                         }`}
                       />
-                      <div className="flex justify-between text-[11px] font-mono font-bold text-zinc-400">
-                        <span>60 seconds</span>
-                        <span>120 seconds</span>
+                      <div className="flex justify-between text-[11px] font-mono text-slate-400">
+                        <span>60s (Flash scalp)</span>
+                        <span>120s (Deep cycle)</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Footer Buttons: CANCEL & RUN */}
-                <div className="flex items-center gap-3 pt-4 border-t border-zinc-200/60 dark:border-slate-800">
+                <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setSelectedBotTemplate(null)}
-                    className={`flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider cursor-pointer border transition-all ${
+                    className={`flex-1 py-3 rounded-2xl text-xs font-semibold uppercase tracking-wider cursor-pointer border transition-all ${
                       isLightTheme 
-                        ? 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200' 
-                        : 'bg-slate-800 border-slate-700 text-zinc-300 hover:bg-slate-750'
+                        ? 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200' 
+                        : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-750'
                     }`}
                   >
-                    CANCEL
+                    Cancel
                   </button>
                   <button
                     type="button"
                     disabled={botDeployLoading || !botCapitalInput || parseFloat(botCapitalInput) < selectedBotTemplate.minCapital}
                     onClick={handleDeployBot}
-                    className={`flex-1 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider cursor-pointer transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm ${
-                      isLightTheme 
-                        ? 'bg-amber-500 hover:bg-amber-400 text-white shadow-amber-500/20' 
-                        : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20'
-                    }`}
+                    className="flex-1 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider cursor-pointer transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-xs bg-emerald-500 hover:bg-emerald-600 text-white active:scale-[0.99]"
                   >
                     {botDeployLoading ? (
                       <>
@@ -6126,8 +5929,8 @@ export default function StandardUserDashboard({
                       </>
                     ) : (
                       <>
-                        <Zap size={16} />
-                        <span>RUN</span>
+                        <Zap size={15} />
+                        <span>Deploy & Run</span>
                       </>
                     )}
                   </button>
@@ -7740,11 +7543,11 @@ export default function StandardUserDashboard({
                 onClick={() => handleTabChange(tab.id as any)}
                 className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer ${
                   isSelected 
-                    ? 'text-[#ff444f] font-bold' 
+                    ? 'text-emerald-600 font-bold' 
                     : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                <Icon size={20} className={isSelected ? 'scale-105 text-[#ff444f]' : 'text-slate-500'} strokeWidth={isSelected ? 2.5 : 2} />
+                <Icon size={20} className={isSelected ? 'scale-105 text-emerald-600' : 'text-slate-500'} strokeWidth={isSelected ? 2.5 : 2} />
                 <span className="text-[10px] tracking-tight">{tab.label}</span>
               </button>
             );
@@ -7772,19 +7575,20 @@ export default function StandardUserDashboard({
           }}
           className="fixed bottom-20 right-4 z-40 touch-none select-none cursor-grab active:cursor-grabbing"
         >
-          <a
-            id="floating-support-telegram-btn"
-            href="https://t.me/akunacapitalsupport"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            id="floating-support-btn"
             onClick={(e) => {
               if (isDraggingSupport || (dragStartTimeRef.current > 0 && Date.now() - dragStartTimeRef.current < 250)) {
                 e.preventDefault();
+                return;
               }
+              localStorage.setItem('profile_subpage', 'support');
+              onOpenProfile();
             }}
-            className="relative flex items-center justify-center w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-300 text-zinc-950 shadow-xl shadow-emerald-500/40 border-2 border-white focus:outline-none group active:shadow-inner"
-            title="24/7 Support (@akunacapitalsupport)"
-            aria-label="Open 24/7 Customer Support"
+            className="relative flex items-center justify-center w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-300 text-zinc-950 shadow-xl shadow-emerald-500/40 border-2 border-white focus:outline-none group active:shadow-inner cursor-pointer"
+            title="Customer Support (Zangi & Telegram)"
+            aria-label="Open Customer Support"
           >
             {/* Live Online Status Dot */}
             <span className="absolute top-0 right-0 flex h-3.5 w-3.5 -mt-0.5 -mr-0.5 pointer-events-none">
@@ -7800,7 +7604,7 @@ export default function StandardUserDashboard({
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
               <span>Customer Support</span>
             </div>
-          </a>
+          </button>
         </motion.div>
       )}
 

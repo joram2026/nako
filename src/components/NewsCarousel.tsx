@@ -1,264 +1,330 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { CryptoPrice, ReferralDepositConfig } from '../types';
-import { ChevronLeft, ChevronRight, Gift, Users } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-
-const FALLBACK_CRYPTO = [
-  { name: 'Bitcoin', symbol: 'BTC', price: 94250.30, change24h: 3.45 },
-  { name: 'Ethereum', symbol: 'ETH', price: 3480.12, change24h: 1.82 },
-  { name: 'Solana', symbol: 'SOL', price: 184.45, change24h: -2.15 },
-  { name: 'Binance Coin', symbol: 'BNB', price: 592.20, change24h: 0.95 },
-  { name: 'XRP', symbol: 'XRP', price: 2.54, change24h: 4.12 }
-];
+import { SlideshowBanner } from '../types';
 
 interface NewsCarouselProps {
-  cryptoPrices?: CryptoPrice[];
+  cryptoPrices?: any[];
+  onOpenDeposit?: () => void;
+  onOpenProfile?: (subpage?: string) => void;
+  onSwitchTab?: (tab: 'home' | 'wallet' | 'trade' | 'history' | 'earn') => void;
+  // Allow passing custom images directly
+  customBanners?: SlideshowBanner[];
 }
 
-export default function NewsCarousel({ cryptoPrices = FALLBACK_CRYPTO }: NewsCarouselProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [refConfig, setRefConfig] = useState<ReferralDepositConfig | null>(null);
+// High-fidelity self-contained default image banners (used when no custom images are uploaded yet)
+const DEFAULT_IMAGE_BANNERS: SlideshowBanner[] = [
+  {
+    id: 'banner-placeholder-1',
+    imageUrl: `data:image/svg+xml;utf8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="100%" height="100%">
+        <defs>
+          <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#050a14"/>
+            <stop offset="50%" stop-color="#0b1528"/>
+            <stop offset="100%" stop-color="#021c1a"/>
+          </linearGradient>
+          <linearGradient id="glow1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#10b981" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.2"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="500" fill="url(#bg1)"/>
+        <g stroke="#1e293b" stroke-width="1" stroke-opacity="0.35">
+          <line x1="0" y1="100" x2="1200" y2="100"/>
+          <line x1="0" y1="200" x2="1200" y2="200"/>
+          <line x1="0" y1="300" x2="1200" y2="300"/>
+          <line x1="0" y1="400" x2="1200" y2="400"/>
+          <line x1="200" y1="0" x2="200" y2="500"/>
+          <line x1="400" y1="0" x2="400" y2="500"/>
+          <line x1="600" y1="0" x2="600" y2="500"/>
+          <line x1="800" y1="0" x2="800" y2="500"/>
+          <line x1="1000" y1="0" x2="1000" y2="500"/>
+        </g>
+        <path d="M 0,380 Q 200,340 350,280 T 700,240 T 950,150 T 1200,100" fill="none" stroke="url(#glow1)" stroke-width="4"/>
+        <path d="M 0,380 Q 200,340 350,280 T 700,240 T 950,150 T 1200,100 L 1200,500 L 0,500 Z" fill="#10b981" fill-opacity="0.08"/>
+        <circle cx="950" cy="150" r="6" fill="#10b981"/>
+        <circle cx="950" cy="150" r="16" fill="none" stroke="#10b981" stroke-width="1.5" stroke-opacity="0.5"/>
+        <g transform="translate(80, 150)">
+          <rect x="0" y="0" width="130" height="28" rx="6" fill="#10b981" fill-opacity="0.2"/>
+          <text x="12" y="19" fill="#10b981" font-family="monospace" font-size="12" font-weight="bold" letter-spacing="2">PROPRIETARY</text>
+          <text x="0" y="80" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" letter-spacing="-1">AKUNA CAPITAL</text>
+          <text x="0" y="118" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">Global Algorithmic Market Making & Multi-Asset Execution</text>
+          <g transform="translate(0, 150)">
+            <rect x="0" y="0" width="160" height="38" rx="10" fill="#10b981"/>
+            <text x="22" y="24" fill="#042f2e" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">START TRADING →</text>
+          </g>
+        </g>
+      </svg>
+    `)}`,
+    title: 'Akuna Capital Trading Floor',
+    actionType: 'trade',
+    active: true
+  },
+  {
+    id: 'banner-placeholder-2',
+    imageUrl: `data:image/svg+xml;utf8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="100%" height="100%">
+        <defs>
+          <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0a0f1d"/>
+            <stop offset="50%" stop-color="#111827"/>
+            <stop offset="100%" stop-color="#1e1b4b"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="500" fill="url(#bg2)"/>
+        <g stroke="#3b82f6" stroke-width="1.5" stroke-opacity="0.3">
+          <line x1="850" y1="120" x2="1020" y2="200"/>
+          <line x1="1020" y1="200" x2="940" y2="340"/>
+          <line x1="940" y1="340" x2="780" y2="280"/>
+          <line x1="780" y1="280" x2="850" y2="120"/>
+          <line x1="850" y1="120" x2="940" y2="340"/>
+        </g>
+        <circle cx="850" cy="120" r="8" fill="#3b82f6"/>
+        <circle cx="1020" cy="200" r="12" fill="#8b5cf6"/>
+        <circle cx="940" cy="340" r="10" fill="#06b6d4"/>
+        <circle cx="780" cy="280" r="7" fill="#6366f1"/>
+        <g transform="translate(80, 150)">
+          <rect x="0" y="0" width="160" height="28" rx="6" fill="#3b82f6" fill-opacity="0.2"/>
+          <text x="12" y="19" fill="#60a5fa" font-family="monospace" font-size="12" font-weight="bold" letter-spacing="2">GLOBAL NETWORK</text>
+          <text x="0" y="80" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" letter-spacing="-1">DEEP LIQUIDITY POOLS</text>
+          <text x="0" y="118" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">Tier-1 Institutional Execution across Gold, Forex & Crypto</text>
+          <g transform="translate(0, 150)">
+            <rect x="0" y="0" width="160" height="38" rx="10" fill="#3b82f6"/>
+            <text x="20" y="24" fill="#ffffff" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">EXPLORE MARKETS →</text>
+          </g>
+        </g>
+      </svg>
+    `)}`,
+    title: 'Global Liquidity Network',
+    actionType: 'none',
+    active: true
+  },
+  {
+    id: 'banner-placeholder-3',
+    imageUrl: `data:image/svg+xml;utf8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500" width="100%" height="100%">
+        <defs>
+          <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0c0a09"/>
+            <stop offset="50%" stop-color="#1c1917"/>
+            <stop offset="100%" stop-color="#292524"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="500" fill="url(#bg3)"/>
+        <g transform="translate(780, 140)">
+          <rect x="0" y="0" width="320" height="200" rx="16" fill="#000000" fill-opacity="0.5" stroke="#f59e0b" stroke-opacity="0.3" stroke-width="1.5"/>
+          <text x="24" y="45" fill="#f59e0b" font-family="monospace" font-size="13" font-weight="bold">QUANT ENGINE v4.2</text>
+          <text x="24" y="95" fill="#ffffff" font-family="system-ui, sans-serif" font-size="28" font-weight="bold">+96.4% Accuracy</text>
+          <text x="24" y="130" fill="#a8a29e" font-family="system-ui, sans-serif" font-size="14">Automated Flash Arbitrage</text>
+          <line x1="24" y1="155" x2="296" y2="155" stroke="#44403c" stroke-width="1"/>
+          <circle cx="280" cy="40" r="5" fill="#10b981"/>
+        </g>
+        <g transform="translate(80, 150)">
+          <rect x="0" y="0" width="150" height="28" rx="6" fill="#f59e0b" fill-opacity="0.2"/>
+          <text x="12" y="19" fill="#fbbf24" font-family="monospace" font-size="12" font-weight="bold" letter-spacing="2">AI QUANT SYSTEMS</text>
+          <text x="0" y="80" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" letter-spacing="-1">AUTOMATED TRADING</text>
+          <text x="0" y="118" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">Deploy high-performance quant bots in under 60 seconds</text>
+          <g transform="translate(0, 150)">
+            <rect x="0" y="0" width="160" height="38" rx="10" fill="#f59e0b"/>
+            <text x="22" y="24" fill="#451a03" font-family="system-ui, sans-serif" font-size="13" font-weight="bold">DEPLOY BOT NOW →</text>
+          </g>
+        </g>
+      </svg>
+    `)}`,
+    title: 'Algorithmic Trading Systems',
+    actionType: 'trade',
+    active: true
+  }
+];
 
-  // Subscribe to live referral deposit config from Firestore backend
+export default function NewsCarousel({ 
+  onOpenDeposit,
+  onOpenProfile,
+  onSwitchTab,
+  customBanners
+}: NewsCarouselProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [dbBanners, setDbBanners] = useState<SlideshowBanner[]>([]);
+  const [hasLoadedFromDb, setHasLoadedFromDb] = useState(false);
+  const touchStartXRef = useRef<number | null>(null);
+
+  // Subscribe to live slideshow banners from Firestore settings
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'settings', 'referral_deposit_config'), (snap) => {
+    const unsub = onSnapshot(doc(db, 'settings', 'slideshow_banners'), (snap) => {
+      setHasLoadedFromDb(true);
       if (snap.exists()) {
-        const data = snap.data() as ReferralDepositConfig;
-        if (data.tiers && data.tiers.length > 0) {
-          setRefConfig(data);
+        const data = snap.data();
+        if (Array.isArray(data.banners) && data.banners.length > 0) {
+          const activeOnly = data.banners.filter((b: SlideshowBanner) => b && b.active !== false && b.imageUrl);
+          if (activeOnly.length > 0) {
+            setDbBanners(activeOnly);
+            return;
+          }
         }
       }
+      setDbBanners([]);
     }, (err) => {
-      console.error('Error subscribing to referral config in NewsCarousel:', err);
+      console.error('Error subscribing to slideshow banners in NewsCarousel:', err);
+      setHasLoadedFromDb(true);
     });
     return () => unsub();
   }, []);
 
-  const tiers = useMemo(() => {
-    if (refConfig && refConfig.tiers && refConfig.tiers.length > 0) {
-      return refConfig.tiers;
+  // Compute active banner list
+  const activeBanners: SlideshowBanner[] = useMemo(() => {
+    if (customBanners && customBanners.length > 0) {
+      return customBanners.filter(b => b.active !== false);
     }
-    // Default fallback bonus tiers if not yet set in backend settings
-    return [
-      { id: 't1', minAmount: 10, maxAmount: 99.99, refereePercent: 4, referrerPercent: 4 },
-      { id: 't2', minAmount: 100, maxAmount: 499.99, refereePercent: 5, referrerPercent: 5 },
-      { id: 't3', minAmount: 500, maxAmount: 10000, refereePercent: 6, referrerPercent: 6 }
-    ];
-  }, [refConfig]);
+    if (dbBanners.length > 0) {
+      return dbBanners;
+    }
+    return DEFAULT_IMAGE_BANNERS;
+  }, [customBanners, dbBanners]);
 
-  const [brandImgSrc, setBrandImgSrc] = useState<string>('/morexpage.png');
-
-  // Generate 5 dynamic slides
-  const slides = useMemo(() => {
-    const today = new Date();
-    const daySeed = today.getFullYear() * 372 + today.getMonth() * 31 + today.getDate();
-
-    return [
-      {
-        id: `slide-brand-${daySeed}`,
-        type: 'brand',
-        title: '',
-        subtitle: '',
-        source: 'Akuna Capital Global Command Center',
-        time: 'Live View',
-        image: brandImgSrc,
-        fallbackImage: '/morex_slide_brand.svg',
-        badgeTag: 'Akuna Capital'
-      },
-      {
-        id: `slide-deposit-bonus-${daySeed}`,
-        type: 'deposit_bonus',
-        title: 'First Deposit Welcome Bonus Badges',
-        subtitle: 'Fund your wallet to unlock instant cash rewards credited upon deposit.',
-        source: 'Akuna Capital Deposit Promotion',
-        time: 'Active Offer',
-        image: '/morex_slide_deposit_bonus.svg',
-        badgeTag: '1st Deposit Bonus'
-      },
-      {
-        id: `slide-referral-bonus-${daySeed}`,
-        type: 'referral_bonus',
-        title: 'Referee First Deposit Commission Badges',
-        subtitle: 'Invite friends to Akuna Capital and receive direct cash commissions.',
-        source: 'Akuna Capital Partner Program',
-        time: 'Referral Rewards',
-        image: '/morex_slide_referral_bonus.svg',
-        badgeTag: 'Referral Commission'
-      },
-      {
-        id: `slide-bot-logic-${daySeed}`,
-        type: 'bot_logic',
-        title: '',
-        subtitle: '',
-        source: 'Akuna Capital Quant Bot Engine',
-        time: '24/7 Active',
-        image: '/morex_slide_bot_logic.svg',
-        badgeTag: 'Bot Trading Logic'
-      },
-      {
-        id: `slide-copy-trading-${daySeed}`,
-        type: 'copy_trading',
-        title: 'Verified Copy Trader Lead Experts',
-        subtitle: 'Follow top expert traders and automatically copy high-accuracy market signals.',
-        source: 'Akuna Capital Copy Trading Engine',
-        time: 'Live Copy Trading',
-        image: '/morex_slide_signals_logic.svg',
-        badgeTag: 'Copy Trading'
-      }
-    ];
-  }, [brandImgSrc]);
-
-  // Slideshow auto advance interval
+  // Slideshow auto-advance (paused when hovering or interacting)
   useEffect(() => {
+    if (isHovered || activeBanners.length <= 1) return;
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % slides.length);
-    }, 6500);
+      setActiveIndex((prev) => (prev + 1) % activeBanners.length);
+    }, 6000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [activeBanners.length, isHovered]);
+
+  // Keep active index in bounds if banner list length changes
+  useEffect(() => {
+    if (activeIndex >= activeBanners.length) {
+      setActiveIndex(0);
+    }
+  }, [activeBanners.length, activeIndex]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setActiveIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    setActiveIndex((prev) => (prev === 0 ? activeBanners.length - 1 : prev - 1));
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setActiveIndex((prev) => (prev + 1) % slides.length);
+    setActiveIndex((prev) => (prev + 1) % activeBanners.length);
   };
 
-  const activeSlide = slides[activeIndex] || slides[0];
-  const isBadgeOverlaySlide = activeSlide.type === 'deposit_bonus' || activeSlide.type === 'referral_bonus';
+  // Touch swipe support for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null || activeBanners.length <= 1) return;
+    const diff = touchStartXRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        setActiveIndex((prev) => (prev + 1) % activeBanners.length);
+      } else {
+        setActiveIndex((prev) => (prev === 0 ? activeBanners.length - 1 : prev - 1));
+      }
+    }
+    touchStartXRef.current = null;
+  };
+
+  const currentBanner = activeBanners[activeIndex] || activeBanners[0];
+
+  const handleBannerClick = () => {
+    if (!currentBanner) return;
+    if (currentBanner.actionType === 'deposit' && onOpenDeposit) {
+      onOpenDeposit();
+    } else if (currentBanner.actionType === 'trade' && onSwitchTab) {
+      onSwitchTab('trade');
+    } else if (currentBanner.actionType === 'earn' && onSwitchTab) {
+      onSwitchTab('earn');
+    } else if (currentBanner.linkUrl) {
+      if (currentBanner.linkUrl.startsWith('http')) {
+        window.open(currentBanner.linkUrl, '_blank', 'noopener,noreferrer');
+      } else if (onSwitchTab && (currentBanner.linkUrl === 'trade' || currentBanner.linkUrl === 'wallet' || currentBanner.linkUrl === 'earn' || currentBanner.linkUrl === 'history')) {
+        onSwitchTab(currentBanner.linkUrl as any);
+      }
+    }
+  };
+
+  if (!currentBanner) {
+    return null;
+  }
 
   return (
-    <div id="news-carousel-container" className="relative w-full max-w-xl mx-auto overflow-hidden rounded-2xl bg-zinc-950 border border-amber-500/30 text-white shadow-2xl aspect-[3/1] min-h-[140px] xs:min-h-[160px] sm:min-h-[180px] flex flex-col justify-center">
-      {/* Image Banner Background */}
+    <div 
+      id="news-carousel-container" 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onClick={handleBannerClick}
+      className={`relative w-full max-w-4xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-slate-900 shadow-sm aspect-[21/9] sm:aspect-[2.4/1] min-h-[140px] xs:min-h-[160px] sm:min-h-[190px] md:min-h-[220px] flex items-center justify-center select-none group/carousel ${
+        currentBanner.actionType !== 'none' || currentBanner.linkUrl ? 'cursor-pointer' : ''
+      }`}
+    >
+      {/* Pure Image Slide: Full Bleed */}
       <img
-        key={activeSlide.id}
-        src={activeSlide.image}
-        alt={activeSlide.badgeTag || 'Akuna Capital Slide'}
+        key={currentBanner.id || currentBanner.imageUrl}
+        src={currentBanner.imageUrl}
+        alt={currentBanner.title || `Slideshow Banner ${activeIndex + 1}`}
+        className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-500 ease-in-out"
         onError={(e) => {
-          if (activeSlide.type === 'brand' && brandImgSrc !== '/morex_slide_brand.svg') {
-            setBrandImgSrc('/morex_slide_brand.svg');
-          } else if (activeSlide.fallbackImage) {
-            e.currentTarget.src = activeSlide.fallbackImage;
+          // If image fails to load, gracefully fallback to default built-in SVG without infinite loop
+          if (e.currentTarget.src !== DEFAULT_IMAGE_BANNERS[0].imageUrl) {
+            e.currentTarget.src = DEFAULT_IMAGE_BANNERS[0].imageUrl;
           }
-        }}
-        className="absolute inset-0 w-full h-full object-contain sm:object-cover object-center transition-all duration-700 ease-in-out"
-        style={{ 
-          filter: isBadgeOverlaySlide ? 'brightness(0.32) contrast(1.15)' : 'brightness(1.0) contrast(1.05)'
         }}
       />
 
-      {/* Dark gradient backdrop overlay for text/badge readability */}
-      {isBadgeOverlaySlide && (
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/80 to-zinc-950/60 pointer-events-none" />
+      {/* Subtle bottom shadow vignette so dots remain visible on bright images */}
+      <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+
+      {/* PREVIOUS BUTTON (Appears on hover or mobile tap) */}
+      {activeBanners.length > 1 && (
+        <button 
+          id="carousel-prev"
+          onClick={handlePrev}
+          className="absolute left-2 sm:left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-900/70 hover:bg-slate-900/90 text-white border border-white/20 flex items-center justify-center transition-all backdrop-blur-md shadow-md cursor-pointer hover:scale-105 active:scale-95 opacity-80 group-hover/carousel:opacity-100"
+          aria-label="Previous slide"
+        >
+          <ChevronLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+        </button>
       )}
 
-      {/* FLOATING SIDE NAVIGATION ARROWS */}
-      <button 
-        id="carousel-prev"
-        onClick={handlePrev}
-        className="absolute left-1.5 sm:left-2.5 top-1/2 -translate-y-1/2 z-20 p-1 sm:p-1.5 rounded-full bg-zinc-950/80 border border-amber-500/35 text-amber-400 hover:text-amber-300 hover:bg-zinc-900/90 hover:scale-105 active:scale-95 transition-all backdrop-blur-md shadow-lg cursor-pointer"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-      </button>
+      {/* NEXT BUTTON (Appears on hover or mobile tap) */}
+      {activeBanners.length > 1 && (
+        <button 
+          id="carousel-next"
+          onClick={handleNext}
+          className="absolute right-2 sm:right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-900/70 hover:bg-slate-900/90 text-white border border-white/20 flex items-center justify-center transition-all backdrop-blur-md shadow-md cursor-pointer hover:scale-105 active:scale-95 opacity-80 group-hover/carousel:opacity-100"
+          aria-label="Next slide"
+        >
+          <ChevronRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+        </button>
+      )}
 
-      <button 
-        id="carousel-next"
-        onClick={handleNext}
-        className="absolute right-1.5 sm:right-2.5 top-1/2 -translate-y-1/2 z-20 p-1 sm:p-1.5 rounded-full bg-zinc-950/80 border border-amber-500/35 text-amber-400 hover:text-amber-300 hover:bg-zinc-900/90 hover:scale-105 active:scale-95 transition-all backdrop-blur-md shadow-lg cursor-pointer"
-        aria-label="Next slide"
-      >
-        <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-      </button>
-
-      {/* DYNAMIC BADGES OVERLAY (FOR DEPOSIT BONUS & REFERRAL COMMISSION SLIDES) */}
-      {activeSlide.type === 'deposit_bonus' && (
-        <div className="relative z-10 px-6 xs:px-8 sm:px-12 py-2 sm:py-3 pb-5 sm:pb-6 select-none flex-1 flex flex-col justify-center">
-          <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
-            <Gift className="text-amber-400 shrink-0 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span className="text-[8px] xs:text-[9px] sm:text-[10px] font-extrabold text-amber-400 uppercase tracking-widest truncate">
-              FIRST DEPOSIT REWARDS
-            </span>
-          </div>
-          <h3 className="text-[11px] xs:text-xs sm:text-sm font-extrabold text-white tracking-tight leading-snug truncate">
-            {activeSlide.title}
-          </h3>
-          <p className="text-[9px] xs:text-[10px] sm:text-xs text-zinc-300/90 font-medium mb-1.5 sm:mb-2.5 line-clamp-1 sm:line-clamp-2">
-            {activeSlide.subtitle}
-          </p>
-
-          {/* Dynamic Badges from Backend */}
-          <div className="grid grid-cols-3 gap-1 sm:gap-2">
-            {tiers.map((t, idx) => (
-              <div key={t.id || idx} className="bg-zinc-900/90 border border-amber-500/40 rounded-lg sm:rounded-xl p-1 sm:p-2 text-center backdrop-blur-md shadow-lg flex flex-col justify-between hover:border-amber-400/70 transition-colors min-w-0">
-                <span className="block text-[7px] xs:text-[8px] sm:text-[9px] text-zinc-300 font-bold uppercase tracking-wider truncate">
-                  DEP ${t.minAmount} – {t.maxAmount >= 9999 ? 'MAX' : `$${t.maxAmount}`}
-                </span>
-                <span className="block text-[10px] xs:text-xs sm:text-sm font-black text-amber-400 font-mono mt-0.5 leading-none">
-                  +{t.refereePercent}% Cash
-                </span>
-                <span className="block text-[7px] xs:text-[8px] text-amber-300/80 font-semibold mt-0.5 truncate">
-                  Welcome Bonus
-                </span>
-              </div>
-            ))}
-          </div>
+      {/* BOTTOM CAPSULE INDICATORS */}
+      {activeBanners.length > 1 && (
+        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/60 border border-white/20 backdrop-blur-md">
+          {activeBanners.map((_, idx) => (
+            <button
+              key={idx}
+              id={`carousel-dot-${idx}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveIndex(idx);
+              }}
+              className={`rounded-full transition-all duration-300 cursor-pointer ${
+                idx === activeIndex 
+                  ? 'w-5 sm:w-6 h-1.5 bg-emerald-500 shadow-sm shadow-emerald-500/50' 
+                  : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
         </div>
       )}
-
-      {activeSlide.type === 'referral_bonus' && (
-        <div className="relative z-10 px-6 xs:px-8 sm:px-12 py-2 sm:py-3 pb-5 sm:pb-6 select-none flex-1 flex flex-col justify-center">
-          <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5 sm:mb-1">
-            <Users className="text-amber-400 shrink-0 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span className="text-[8px] xs:text-[9px] sm:text-[10px] font-extrabold text-amber-400 uppercase tracking-widest truncate">
-              PARTNER PROGRAM
-            </span>
-          </div>
-          <h3 className="text-[11px] xs:text-xs sm:text-sm font-extrabold text-white tracking-tight leading-snug truncate">
-            {activeSlide.title}
-          </h3>
-          <p className="text-[9px] xs:text-[10px] sm:text-xs text-zinc-300/90 font-medium mb-1.5 sm:mb-2.5 line-clamp-1 sm:line-clamp-2">
-            {activeSlide.subtitle}
-          </p>
-
-          {/* Dynamic Badges from Backend */}
-          <div className="grid grid-cols-3 gap-1 sm:gap-2">
-            {tiers.map((t, idx) => (
-              <div key={t.id || idx} className="bg-zinc-900/90 border border-amber-500/40 rounded-lg sm:rounded-xl p-1 sm:p-2 text-center backdrop-blur-md shadow-lg flex flex-col justify-between hover:border-amber-400/70 transition-colors min-w-0">
-                <span className="block text-[7px] xs:text-[8px] sm:text-[9px] text-zinc-300 font-bold uppercase tracking-wider truncate">
-                  REF DEP ${t.minAmount} – {t.maxAmount >= 9999 ? 'MAX' : `$${t.maxAmount}`}
-                </span>
-                <span className="block text-[10px] xs:text-xs sm:text-sm font-black text-amber-400 font-mono mt-0.5 leading-none">
-                  +{t.referrerPercent}% Commission
-                </span>
-                <span className="block text-[7px] xs:text-[8px] text-amber-300/80 font-semibold mt-0.5 truncate">
-                  Direct Cash
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* FLOATING SUBTLE DOTS OVERLAY */}
-      <div className="absolute bottom-1.5 sm:bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 sm:gap-1.5 px-2 py-0.5 rounded-full bg-zinc-950/70 border border-amber-500/20 backdrop-blur-sm">
-        {slides.map((_, idx) => (
-          <button
-            key={idx}
-            id={`carousel-dot-${idx}`}
-            onClick={() => setActiveIndex(idx)}
-            className={`h-1 sm:h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-              idx === activeIndex 
-                ? 'w-4 sm:w-5 bg-gradient-to-r from-amber-400 to-amber-500 shadow-sm shadow-amber-500/50' 
-                : 'w-1 sm:w-1.5 bg-zinc-600/80 hover:bg-zinc-400'
-            }`}
-            aria-label={`Go to slide ${idx + 1}`}
-          />
-        ))}
-      </div>
     </div>
   );
 }

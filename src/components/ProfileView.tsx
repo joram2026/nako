@@ -10,7 +10,8 @@ import {
   ChevronRight, ChevronDown, ChevronUp, HelpCircle, Send, Download, Laptop,
   Gamepad2, LayoutGrid, Clapperboard, BookOpen, Star, Share2, Plus, 
   Search, MoreVertical, Info, ShieldCheck, X, Zap, Tag, Wallet,
-  Users, UserPlus, Globe
+  Users, UserPlus, Globe, ArrowDownLeft, ArrowUpRight,
+  Headphones, MessageSquare, ExternalLink
 } from 'lucide-react';
 import VouchersView from './VouchersView';
 import { SUPPORTED_COUNTRIES, getCountryDetails } from '../utils/timezones';
@@ -93,6 +94,7 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
   const verificationError = verificationErrorState;
   const [copied, setCopied] = useState(false);
   const [copiedReferral, setCopiedReferral] = useState(false);
+  const [copiedZangi, setCopiedZangi] = useState(false);
 
   // PWA and Play Store installation states
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -255,6 +257,30 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
       }
     } catch (err) {
       console.error('Fallback copy failed:', err);
+    }
+  };
+
+  const handleCopyZangi = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const zangiNumber = '2126299843';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(zangiNumber)
+        .then(() => {
+          setCopiedZangi(true);
+          toast.success('Zangi Support number copied: 2126299843', 'Zangi Support');
+          setTimeout(() => setCopiedZangi(false), 2500);
+        })
+        .catch(() => {
+          fallbackCopyText(zangiNumber);
+          setCopiedZangi(true);
+          toast.success('Zangi Support number copied: 2126299843', 'Zangi Support');
+          setTimeout(() => setCopiedZangi(false), 2500);
+        });
+    } else {
+      fallbackCopyText(zangiNumber);
+      setCopiedZangi(true);
+      toast.success('Zangi Support number copied: 2126299843', 'Zangi Support');
+      setTimeout(() => setCopiedZangi(false), 2500);
     }
   };
 
@@ -2197,54 +2223,172 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
             </button>
             <div className="text-left">
               <h2 className="text-xl font-bold tracking-tight text-zinc-900">Customer Support</h2>
-              <p className="text-xs text-zinc-500">Connect with our support team 24/7</p>
+              <p className="text-xs text-zinc-500">Official support and community channels</p>
             </div>
           </div>
 
           <div className="space-y-4 text-left">
             {/* Promo / Intro Banner */}
             <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 space-y-2 shadow-xs text-emerald-950">
-              <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  Support & Community Hub
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  Online 24/7
                 </span>
-                We are online to help
-              </h3>
+              </div>
               <p className="text-xs text-emerald-850 leading-relaxed">
-                If you have questions regarding deposits, withdrawals, referrals, or trade executions, please reach out to our team. Our typical response time is less than 5 minutes.
+                Connect with us through our two verified platforms: reach <strong>Official Support on Zangi</strong> for direct 1-on-1 assistance, or <strong>Join the Telegram Group</strong> to interact with our trader community.
               </p>
             </div>
 
-            {/* Support Channels */}
+            {/* Support Channels Grid */}
             <div className="space-y-3">
-              {/* Telegram Official Support Option */}
-              <a
-                id="telegram-official-support-link"
-                href="https://t.me/akunacapitalsupport"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-4 bg-white hover:bg-zinc-50/80 border border-zinc-200/90 hover:border-emerald-400 p-4 sm:p-5 rounded-2xl transition-all group cursor-pointer no-underline block shadow-xs"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-sky-500 text-white flex items-center justify-center shrink-0 group-hover:scale-105 shadow-xs transition-all">
-                  <Send size={22} className="translate-x-0.5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-base font-black text-zinc-900 group-hover:text-zinc-950 transition-colors">Telegram Support</h4>
-                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200">
-                      @akunacapitalsupport
-                    </span>
+              {/* Channel 1: Zangi Official Support */}
+              <div className="bg-white border-2 border-emerald-500/30 hover:border-emerald-500/60 rounded-2xl p-4 sm:p-5 shadow-xs transition-all space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20">
+                      <Headphones size={22} className="stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-base font-black text-zinc-900">Official Support</h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                          Zangi Messenger
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Direct 1-on-1 official support for account, deposit, withdrawal & verification help
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-zinc-500 mt-1">Direct 24/7 live assistance, transfer guides, and rapid answers</p>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
-                    Online
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Dedicated Desk
                   </span>
-                  <ChevronRight size={18} className="text-zinc-400 group-hover:text-zinc-600 transition-colors" />
                 </div>
-              </a>
+
+                {/* Zangi Number Display & Actions */}
+                <div className="bg-zinc-50 border border-zinc-200/90 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                      Official Zangi Number / ID
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-base font-extrabold text-zinc-900 tracking-wide select-all">
+                        2126299843
+                      </span>
+                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+                        Verified
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      id="copy-zangi-number-btn"
+                      onClick={handleCopyZangi}
+                      className="flex-1 sm:flex-none px-3.5 py-2 bg-white hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 text-zinc-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                    >
+                      {copiedZangi ? (
+                        <>
+                          <Check size={14} className="text-emerald-600 stroke-[3]" />
+                          <span className="text-emerald-600">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={14} className="text-zinc-500" />
+                          <span>Copy Number</span>
+                        </>
+                      )}
+                    </button>
+
+                    <a
+                      id="open-zangi-link"
+                      href="https://services.zangi.com/dl/conversation/2126299843"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-600/20 active:scale-95 no-underline"
+                    >
+                      <MessageSquare size={14} />
+                      <span>Chat on Zangi</span>
+                      <ExternalLink size={12} className="opacity-70" />
+                    </a>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-zinc-500 flex items-center gap-1.5">
+                  <span className="text-emerald-600 font-bold">●</span>
+                  <span>Open Zangi, add number <strong>2126299843</strong> or tap "Chat on Zangi" to start a secure conversation.</span>
+                </p>
+              </div>
+
+              {/* Channel 2: Telegram App Community Group */}
+              <div className="bg-white border border-zinc-200/90 hover:border-sky-300 rounded-2xl p-4 sm:p-5 shadow-xs transition-all space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#229ED9] text-white flex items-center justify-center shrink-0 shadow-md shadow-sky-500/20">
+                      <Send size={22} className="translate-x-0.5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-base font-black text-zinc-900">Telegram App Group</h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 uppercase tracking-wider">
+                          Community Group
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Join the official group for community discussions, market updates & announcements
+                      </p>
+                    </div>
+                  </div>
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 shrink-0">
+                    <Users size={12} />
+                    Official Group
+                  </span>
+                </div>
+
+                {/* Telegram Link Box & Action */}
+                <div className="bg-zinc-50 border border-zinc-200/90 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                      Telegram Group Link
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs sm:text-sm font-bold text-sky-700 tracking-tight select-all">
+                        https://t.me/akunacpt
+                      </span>
+                      <span className="text-[9px] font-bold text-sky-600 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded">
+                        @akunacpt
+                      </span>
+                    </div>
+                  </div>
+
+                  <a
+                    id="telegram-official-group-link"
+                    href="https://t.me/akunacpt"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-[#229ED9] hover:bg-[#1d8bc0] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-sky-500/20 active:scale-95 no-underline"
+                  >
+                    <Send size={13} className="translate-x-0.5" />
+                    <span>Join Telegram Group</span>
+                    <ExternalLink size={12} className="opacity-70" />
+                  </a>
+                </div>
+
+                <p className="text-[11px] text-zinc-500 flex items-center gap-1.5">
+                  <span className="text-sky-500 font-bold">●</span>
+                  <span>Connect with other members in our official Telegram community group.</span>
+                </p>
+              </div>
             </div>
 
             {/* Quick Note Card */}
@@ -2612,143 +2756,348 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
                 <h3 className="text-xs font-bold text-zinc-900 tracking-tight">Screenshots</h3>
                 <div className="flex overflow-x-auto gap-3.5 pb-4 pt-1 px-1 scrollbar-thin scrollbar-thumb-zinc-200 select-none">
                   
-                  {/* Screenshot 1: High Yield Dashboard */}
-                  <div className="w-[180px] h-[320px] shrink-0 border-[3px] border-zinc-800 rounded-[1.8rem] bg-slate-900 flex flex-col overflow-hidden relative shadow-md text-left font-sans text-zinc-300">
-                    <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-zinc-950 pointer-events-none"></div>
+                  {/* Screenshot 1: Home Tab Dashboard & Hero */}
+                  <div className="w-[185px] h-[340px] shrink-0 border-[3px] border-zinc-800 rounded-[1.8rem] bg-[#f4f5f8] flex flex-col overflow-hidden relative shadow-md text-left font-sans text-slate-800">
                     {/* Mock phone status bar */}
-                    <div className="h-4 px-3 bg-slate-950 text-zinc-500 text-[7px] flex justify-between items-center select-none font-mono">
+                    <div className="h-4.5 px-3 bg-[#151922] text-slate-400 text-[7px] flex justify-between items-center select-none font-mono">
                       <span>12:45</span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 text-[8px]">
                         <span>📶</span>
                         <span>🔋</span>
                       </div>
                     </div>
-                    {/* Mock App Content */}
-                    <div className="p-2.5 space-y-2.5 relative z-10 flex-1 flex flex-col">
-                      <div className="flex justify-between items-center border-b border-slate-800/80 pb-1.5">
-                        <span className="text-[9px] font-black tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">AKUNA</span>
-                        <span className="text-[7px] text-emerald-400 font-bold bg-emerald-500/10 px-1 rounded-full border border-emerald-500/20">LIVE</span>
-                      </div>
-                      
-                      {/* Balance Card */}
-                      <div className="bg-slate-950/80 border border-slate-800 p-2 rounded-xl space-y-1">
-                        <span className="text-[7px] text-zinc-500 font-bold uppercase tracking-wider">Total Active Balance</span>
-                        <div className="text-xs font-black text-white">$24,815.59</div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[6px] text-emerald-400 font-bold">▲ +24.8% profit</span>
-                          <span className="text-[5px] text-zinc-600 font-mono">this cycle</span>
+
+                    {/* App Content */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      {/* Deriv Dark Hero Section (#151922) */}
+                      <div className="bg-[#151922] text-white px-2.5 pt-1.5 pb-3 rounded-b-2xl shadow-xs space-y-2">
+                        {/* Top bar lockup */}
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 rounded-md bg-emerald-500 flex items-center justify-center text-[9px] font-black text-slate-950">
+                              ▲
+                            </div>
+                            <span className="text-[10px] font-black tracking-tight text-white">AKUNA</span>
+                          </div>
+                          <span className="text-[7px] px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">
+                            Main Account
+                          </span>
+                        </div>
+
+                        {/* Balance display */}
+                        <div>
+                          <span className="text-[7px] text-slate-400 font-medium block">Total amount</span>
+                          <div className="text-xs font-bold font-sans text-white tracking-tight flex items-center gap-1">
+                            <span>$24,815.59</span>
+                            <span className="text-[8px] text-slate-300 font-normal">USD</span>
+                          </div>
+                        </div>
+
+                        {/* 3 Circular Actions: Deposit, Send, Withdraw */}
+                        <div className="flex items-center justify-around pt-0.5">
+                          <div className="flex flex-col items-center">
+                            <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                              <ArrowDownLeft size={12} strokeWidth={2.5} />
+                            </div>
+                            <span className="text-[6.5px] font-semibold text-slate-200 mt-1">Deposit</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="w-7 h-7 rounded-full border border-white/60 bg-white/5 text-white flex items-center justify-center">
+                              <Send size={10} />
+                            </div>
+                            <span className="text-[6.5px] font-semibold text-slate-200 mt-1">Send</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="w-7 h-7 rounded-full border border-white/60 bg-white/5 text-white flex items-center justify-center">
+                              <ArrowUpRight size={12} strokeWidth={2.5} />
+                            </div>
+                            <span className="text-[6.5px] font-semibold text-slate-200 mt-1">Withdraw</span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Rates block */}
-                      <div className="space-y-1">
-                        <span className="text-[7px] text-zinc-500 font-bold uppercase tracking-wider block">Live Arbitrage Nodes</span>
-                        <div className="bg-slate-950/50 p-1.5 rounded-lg border border-slate-800/50 space-y-1 text-[7px]">
-                          <div className="flex justify-between text-zinc-400">
-                            <span>USDT/KES Spread</span>
-                            <span className="text-emerald-400 font-bold">+8.4%</span>
+                      {/* Light Surface (#f4f5f8): Slideshow Banner & Crypto Market */}
+                      <div className="p-2 space-y-1.5 flex-1 bg-[#f4f5f8] overflow-hidden">
+                        {/* Mini Slideshow Card */}
+                        <div className="rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 text-white p-2 border border-slate-700/60 shadow-2xs space-y-0.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[7px] font-black text-emerald-400 uppercase tracking-wider">Options Market Maker</span>
+                            <span className="text-[6px] text-slate-400">Live</span>
                           </div>
-                          <div className="flex justify-between text-zinc-400">
-                            <span>BTC Pool Liquidity</span>
-                            <span className="text-amber-400 font-bold">+5.2%</span>
+                          <p className="text-[6.5px] text-slate-200 line-clamp-1">Derivatives Liquidity & Competitive Quotes</p>
+                        </div>
+
+                        {/* Crypto Market Header */}
+                        <div className="flex justify-between items-center pt-0.5">
+                          <span className="text-[6.5px] font-bold uppercase tracking-wider text-slate-500">CRYPTO MARKET</span>
+                          <span className="text-[6px] font-semibold text-emerald-600">Live Feed</span>
+                        </div>
+
+                        {/* Mini Token Cards */}
+                        <div className="space-y-1">
+                          <div className="bg-white rounded-lg p-1.5 border border-slate-200/90 shadow-2xs flex justify-between items-center">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center text-[8px] font-bold">₿</div>
+                              <div>
+                                <span className="text-[7px] font-bold text-slate-900 block leading-tight">Bitcoin</span>
+                                <span className="text-[6px] text-slate-400 uppercase">BTC</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[7px] font-bold font-mono text-slate-900 block">$87,420.50</span>
+                              <span className="text-[6px] font-bold text-emerald-600">▲ +3.45%</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-1.5 border border-slate-200/90 shadow-2xs flex justify-between items-center">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center text-[8px] font-bold">Ξ</div>
+                              <div>
+                                <span className="text-[7px] font-bold text-slate-900 block leading-tight">Ethereum</span>
+                                <span className="text-[6px] text-slate-400 uppercase">ETH</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[7px] font-bold font-mono text-slate-900 block">$2,845.20</span>
+                              <span className="text-[6px] font-bold text-emerald-600">▲ +2.10%</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Quick notice */}
-                      <div className="mt-auto bg-emerald-500/5 border border-emerald-500/10 p-1.5 rounded-lg text-[6px] text-emerald-300 leading-tight">
-                        🔒 Safe Escrow Protection completes transaction swaps inside 2 minutes.
+                      {/* Mini Bottom Tab Bar */}
+                      <div className="bg-white border-t border-slate-200 px-2 py-1 grid grid-cols-5 text-center text-[6px] font-bold text-slate-400">
+                        <div className="text-emerald-600 flex flex-col items-center">
+                          <span className="text-[9px]">🏠</span>
+                          <span>Home</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">💼</span>
+                          <span>Wallet</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">🤖</span>
+                          <span>Bot</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">📈</span>
+                          <span>Earn</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">👤</span>
+                          <span>Profile</span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Screenshot 2: MMF Capital Portfolios */}
-                  <div className="w-[180px] h-[320px] shrink-0 border-[3px] border-zinc-800 rounded-[1.8rem] bg-slate-900 flex flex-col overflow-hidden relative shadow-md text-left font-sans text-zinc-300">
-                    <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-zinc-950 pointer-events-none"></div>
+                  {/* Screenshot 2: Home Tab Live Crypto Market Grid */}
+                  <div className="w-[185px] h-[340px] shrink-0 border-[3px] border-zinc-800 rounded-[1.8rem] bg-[#f4f5f8] flex flex-col overflow-hidden relative shadow-md text-left font-sans text-slate-800">
                     {/* Mock phone status bar */}
-                    <div className="h-4 px-3 bg-slate-950 text-zinc-500 text-[7px] flex justify-between items-center select-none font-mono">
+                    <div className="h-4.5 px-3 bg-[#151922] text-slate-400 text-[7px] flex justify-between items-center select-none font-mono">
                       <span>12:45</span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 text-[8px]">
                         <span>📶</span>
                         <span>🔋</span>
                       </div>
                     </div>
-                    {/* Mock App Content */}
-                    <div className="p-2.5 space-y-2.5 relative z-10 flex-1 flex flex-col">
-                      <div className="border-b border-slate-800/80 pb-1.5">
-                        <span className="text-[8px] font-black text-zinc-200 uppercase tracking-wider">MMF Portfolios</span>
-                      </div>
 
-                      <div className="space-y-1.5 flex-1">
-                        <div className="bg-slate-950/80 border border-slate-800 p-2 rounded-xl text-left space-y-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[8px] font-bold text-white">USDT Alpha Fund</span>
-                            <span className="text-[6px] text-emerald-400 font-black">7.5% Daily</span>
+                    {/* App Content */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      {/* Compact Header (#151922) */}
+                      <div className="bg-[#151922] text-white px-2.5 py-2 flex items-center justify-between border-b border-slate-800">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-4 h-4 rounded-md bg-emerald-500 flex items-center justify-center text-[9px] font-black text-slate-950">
+                            ▲
                           </div>
-                          <p className="text-[6px] text-zinc-500 leading-tight">5-Day Capital Lock, compounding payouts dynamically.</p>
+                          <span className="text-[10px] font-black tracking-tight text-white">AKUNA</span>
                         </div>
-
-                        <div className="bg-slate-950/80 border border-slate-800 p-2 rounded-xl text-left space-y-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[8px] font-bold text-white">BTC Premium Fund</span>
-                            <span className="text-[6px] text-amber-400 font-black">5.0% Daily</span>
-                          </div>
-                          <p className="text-[6px] text-zinc-500 leading-tight">3-Day Capital Lock, automated settlement rollover.</p>
-                        </div>
-
-                        <div className="bg-slate-950/80 border border-slate-800 p-2 rounded-xl text-left space-y-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[8px] font-bold text-white">ETH Capital Reserve</span>
-                            <span className="text-[6px] text-sky-400 font-black">6.0% Daily</span>
-                          </div>
-                          <p className="text-[6px] text-zinc-500 leading-tight">7-Day lock-in, multi-pool hedge arbitrage spreads.</p>
+                        <div className="text-right">
+                          <span className="text-[6.5px] text-slate-400 block">Total Balance</span>
+                          <span className="text-[8px] font-bold font-mono text-emerald-400">$24,815.59 USD</span>
                         </div>
                       </div>
 
-                      <div className="mt-auto bg-amber-500/5 border border-amber-500/10 p-1.5 rounded-lg text-[6px] text-amber-300 leading-tight">
-                        📈 Compounded automatically. Multi-node trading delivers seamless execution.
+                      {/* Market Feed Grid (#f4f5f8) */}
+                      <div className="p-2 space-y-1.5 flex-1 bg-[#f4f5f8] overflow-hidden">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[7px] font-bold uppercase tracking-wider text-slate-600">CRYPTO MARKET</span>
+                          <span className="text-[6px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">Live Quotes</span>
+                        </div>
+
+                        {/* 2x2 Token Card Grid matching StandardUserDashboard */}
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {/* BTC */}
+                          <div className="bg-white rounded-xl p-2 border border-slate-200/90 shadow-2xs space-y-1">
+                            <div className="flex items-center gap-1">
+                              <div className="w-4 h-4 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center text-[7px] font-bold">₿</div>
+                              <span className="text-[7px] font-bold text-slate-900 truncate">Bitcoin</span>
+                            </div>
+                            <div className="text-[7.5px] font-mono font-bold text-slate-900">$87,420</div>
+                            <span className="text-[6px] font-bold text-emerald-600 block">▲ +3.45%</span>
+                          </div>
+
+                          {/* ETH */}
+                          <div className="bg-white rounded-xl p-2 border border-slate-200/90 shadow-2xs space-y-1">
+                            <div className="flex items-center gap-1">
+                              <div className="w-4 h-4 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px] font-bold">Ξ</div>
+                              <span className="text-[7px] font-bold text-slate-900 truncate">Ethereum</span>
+                            </div>
+                            <div className="text-[7.5px] font-mono font-bold text-slate-900">$2,845.20</div>
+                            <span className="text-[6px] font-bold text-emerald-600 block">▲ +2.10%</span>
+                          </div>
+
+                          {/* SOL */}
+                          <div className="bg-white rounded-xl p-2 border border-slate-200/90 shadow-2xs space-y-1">
+                            <div className="flex items-center gap-1">
+                              <div className="w-4 h-4 rounded-full bg-purple-500/10 text-purple-600 flex items-center justify-center text-[7px] font-bold">◎</div>
+                              <span className="text-[7px] font-bold text-slate-900 truncate">Solana</span>
+                            </div>
+                            <div className="text-[7.5px] font-mono font-bold text-slate-900">$178.40</div>
+                            <span className="text-[6px] font-bold text-emerald-600 block">▲ +5.80%</span>
+                          </div>
+
+                          {/* Gold */}
+                          <div className="bg-white rounded-xl p-2 border border-slate-200/90 shadow-2xs space-y-1">
+                            <div className="flex items-center gap-1">
+                              <div className="w-4 h-4 rounded-full bg-yellow-500/10 text-yellow-600 flex items-center justify-center text-[7px] font-bold">Au</div>
+                              <span className="text-[7px] font-bold text-slate-900 truncate">XAU/USD</span>
+                            </div>
+                            <div className="text-[7.5px] font-mono font-bold text-slate-900">$2,740.10</div>
+                            <span className="text-[6px] font-bold text-emerald-600 block">▲ +0.95%</span>
+                          </div>
+                        </div>
+
+                        {/* Market Maker Liquidity Pill */}
+                        <div className="bg-emerald-50/90 border border-emerald-200/80 rounded-xl p-2 text-left space-y-0.5">
+                          <span className="text-[6.5px] font-bold text-emerald-800 uppercase tracking-wider block">Competitive Market Spread</span>
+                          <p className="text-[6px] text-emerald-900 leading-tight">
+                            Ultra-tight buy/sell spreads across derivatives order books.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Mini Bottom Tab Bar */}
+                      <div className="bg-white border-t border-slate-200 px-2 py-1 grid grid-cols-5 text-center text-[6px] font-bold text-slate-400">
+                        <div className="text-emerald-600 flex flex-col items-center">
+                          <span className="text-[9px]">🏠</span>
+                          <span>Home</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">💼</span>
+                          <span>Wallet</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">🤖</span>
+                          <span>Bot</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">📈</span>
+                          <span>Earn</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">👤</span>
+                          <span>Profile</span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Screenshot 3: P2P Secure Swaps */}
-                  <div className="w-[180px] h-[320px] shrink-0 border-[3px] border-zinc-800 rounded-[1.8rem] bg-slate-900 flex flex-col overflow-hidden relative shadow-md text-left font-sans text-zinc-300">
-                    <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-zinc-950 pointer-events-none"></div>
+                  {/* Screenshot 3: Home Tab Deposit & Execution */}
+                  <div className="w-[185px] h-[340px] shrink-0 border-[3px] border-zinc-800 rounded-[1.8rem] bg-[#f4f5f8] flex flex-col overflow-hidden relative shadow-md text-left font-sans text-slate-800">
                     {/* Mock phone status bar */}
-                    <div className="h-4 px-3 bg-slate-950 text-zinc-500 text-[7px] flex justify-between items-center select-none font-mono">
+                    <div className="h-4.5 px-3 bg-[#151922] text-slate-400 text-[7px] flex justify-between items-center select-none font-mono">
                       <span>12:45</span>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 text-[8px]">
                         <span>📶</span>
                         <span>🔋</span>
                       </div>
                     </div>
-                    {/* Mock App Content */}
-                    <div className="p-2.5 space-y-2.5 relative z-10 flex-1 flex flex-col">
-                      <div className="border-b border-slate-800/80 pb-1.5 flex justify-between items-center">
-                        <span className="text-[8px] font-black text-zinc-200 uppercase tracking-wider">P2P Escrow Terminal</span>
-                        <span className="text-[6px] bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-1 rounded font-bold uppercase">Escrow</span>
-                      </div>
 
-                      <div className="space-y-2">
-                        <div className="bg-slate-950 p-2 rounded-xl border border-slate-850 space-y-1 text-left">
-                          <span className="text-[8px] font-black text-white block">M-Pesa, MTN Mobile money</span>
-                          <p className="text-[6px] text-zinc-400 leading-normal">
-                            Direct, safe local currency deposits & withdrawals managed under automated smart escrow.
-                          </p>
+                    {/* App Content */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      {/* Deriv Dark Hero Section (#151922) */}
+                      <div className="bg-[#151922] text-white px-2.5 pt-1.5 pb-2.5 rounded-b-2xl shadow-xs space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[8px] font-bold text-slate-300">Quick Deposit</span>
+                          <span className="text-[6.5px] px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">Instant Escrow</span>
                         </div>
-
-                        <div className="bg-emerald-500/5 border border-emerald-500/20 p-2 rounded-xl space-y-1.5">
-                          <span className="text-[7px] font-black text-emerald-400 uppercase tracking-wider block">Escrow Protected Node</span>
-                          <p className="text-[6px] text-zinc-300 leading-normal">
-                            Merchants lock equal security collateral before accepting swaps, preventing slippage or defaults.
-                          </p>
+                        <div>
+                          <span className="text-[6.5px] text-slate-400 block">Available Liquidity</span>
+                          <span className="text-xs font-bold font-mono text-white">$24,815.59 USD</span>
                         </div>
                       </div>
 
-                      <div className="mt-auto flex justify-around items-center bg-slate-950 p-1.5 rounded-lg border border-slate-800 text-[8px] font-bold">
-                        <span className="text-zinc-500 text-[6px]">M-Pesa ✔</span>
-                        <span className="text-zinc-500 text-[6px]">MTN ✔</span>
-                        <span className="text-zinc-500 text-[6px]">Airtel ✔</span>
+                      {/* Deposit Options & Liquidity Nodes (#f4f5f8) */}
+                      <div className="p-2 space-y-1.5 flex-1 bg-[#f4f5f8] overflow-hidden">
+                        <span className="text-[6.5px] font-bold uppercase tracking-wider text-slate-500 block">PAYMENT CHANNELS</span>
+
+                        <div className="space-y-1">
+                          <div className="bg-white rounded-xl p-1.5 border border-slate-200/90 shadow-2xs flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8px] font-black">₮</div>
+                              <div>
+                                <span className="text-[7px] font-bold text-slate-900 block leading-tight">USDT TRC20</span>
+                                <span className="text-[5.5px] text-slate-400">Zero network slippage</span>
+                              </div>
+                            </div>
+                            <span className="text-[6.5px] font-bold text-emerald-600">Instant</span>
+                          </div>
+
+                          <div className="bg-white rounded-xl p-1.5 border border-slate-200/90 shadow-2xs flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-[8px] font-black">₿</div>
+                              <div>
+                                <span className="text-[7px] font-bold text-slate-900 block leading-tight">Bitcoin BTC</span>
+                                <span className="text-[5.5px] text-slate-400">Multi-block confirmation</span>
+                              </div>
+                            </div>
+                            <span className="text-[6.5px] font-bold text-emerald-600">Instant</span>
+                          </div>
+
+                          <div className="bg-white rounded-xl p-1.5 border border-slate-200/90 shadow-2xs flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-[8px] font-black">📱</div>
+                              <div>
+                                <span className="text-[7px] font-bold text-slate-900 block leading-tight">Mobile Money</span>
+                                <span className="text-[5.5px] text-slate-400">M-Pesa · MTN · Airtel</span>
+                              </div>
+                            </div>
+                            <span className="text-[6.5px] font-bold text-emerald-600">Direct</span>
+                          </div>
+                        </div>
+
+                        {/* Escrow Guarantee */}
+                        <div className="bg-slate-900 text-white rounded-xl p-1.5 text-left space-y-0.5 border border-slate-800 mt-auto">
+                          <span className="text-[6.5px] font-bold text-emerald-400 uppercase tracking-wider block">100% Protected Escrow</span>
+                          <p className="text-[5.5px] text-slate-300 leading-tight">
+                            Smart escrow guarantees execution within 1 to 5 minutes.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Mini Bottom Tab Bar */}
+                      <div className="bg-white border-t border-slate-200 px-2 py-1 grid grid-cols-5 text-center text-[6px] font-bold text-slate-400">
+                        <div className="text-emerald-600 flex flex-col items-center">
+                          <span className="text-[9px]">🏠</span>
+                          <span>Home</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">💼</span>
+                          <span>Wallet</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">🤖</span>
+                          <span>Bot</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">📈</span>
+                          <span>Earn</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[9px]">👤</span>
+                          <span>Profile</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2763,12 +3112,13 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
                   <ChevronRight size={16} className="text-zinc-400" />
                 </div>
                 <p className="text-[10px] text-zinc-500 leading-relaxed font-sans">
-                  Welcome to Akuna Capital, the ultimate crypto platform simulator. Tap into lightning-fast compounding cycles, safe peer-to-peer (P2P) escrows, and robust portfolio management. Designed as a high-fidelity Progressive Web App, it operates directly as a standalone app on your home screen with zero storage footprint!
+                  Akuna operates as an options market maker, providing liquidity by quoting competitive buy and sell prices on financial instruments across major derivatives exchanges
                 </p>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-[8px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-bold">Finance</span>
-                  <span className="text-[8px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-bold">Portfolio</span>
-                  <span className="text-[8px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-bold">Escrow Sync</span>
+                  <span className="text-[8px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-bold">Options</span>
+                  <span className="text-[8px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-bold">Market Maker</span>
+                  <span className="text-[8px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-bold">Derivatives</span>
+                  <span className="text-[8px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full font-bold">Liquidity</span>
                 </div>
               </div>
 

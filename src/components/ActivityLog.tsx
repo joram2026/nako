@@ -250,6 +250,25 @@ export default function ActivityLog({ userId, isLightTheme = false }: ActivityLo
           return bTime - aTime;
         });
 
+        // Auto-sync: If any NOWPayments deposit has expired but is still recorded as 'PENDING APPROVAL',
+        // invoke /api/nowpayments/mark-failed in background to mark it FAILED in Firestore.
+        list.forEach((tx: any) => {
+          if (tx.gateway === 'nowpayments' && tx.status === 'PENDING APPROVAL' && tx.nowpaymentsPaymentId) {
+            const txCreatedMs = tx.createdAt?.seconds ? tx.createdAt.seconds * 1000 : (tx.createdAt || 0);
+            const expiryMs = tx.expiresAtMs || (txCreatedMs ? txCreatedMs + 20 * 60 * 1000 : 0);
+            if (expiryMs > 0 && expiryMs < Date.now()) {
+              fetch('/api/nowpayments/mark-failed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  paymentId: tx.nowpaymentsPaymentId,
+                  reason: 'Payment duration expired with no funds detected.'
+                })
+              }).catch(() => {});
+            }
+          }
+        });
+
         setTransactions(list);
         setLoading(false);
       } catch (err) {
@@ -505,27 +524,38 @@ export default function ActivityLog({ userId, isLightTheme = false }: ActivityLo
     };
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'APPROVED':
-        return {
-          label: 'Completed',
-          icon: <CheckCircle2 className="w-2.5 h-2.5 text-white stroke-[2.5]" />,
-          classes: 'bg-emerald-500 text-white shadow-xs border border-emerald-400/20'
-        };
-      case 'DECLINED':
-        return {
-          label: 'Declined',
-          icon: <XCircle className="w-2.5 h-2.5 text-white stroke-[2.5]" />,
-          classes: 'bg-rose-500 text-white shadow-xs border border-rose-400/20'
-        };
-      default:
-        return {
-          label: 'Pending',
-          icon: <Clock className="w-2.5 h-2.5 text-white stroke-[2.5] animate-pulse" />,
-          classes: 'bg-amber-500 text-white shadow-xs border border-amber-400/20'
-        };
+  const getStatusBadge = (status: string, tx?: Transaction) => {
+    const raw = (status || '').toUpperCase().trim();
+    const isNowpaymentsExpired = tx?.gateway === 'nowpayments' && 
+      raw === 'PENDING APPROVAL' && 
+      (tx?.gatewayStatus === 'expired' || tx?.gatewayStatus === 'failed' || (tx?.expiresAtMs && tx.expiresAtMs < Date.now()));
+
+    if (raw === 'APPROVED') {
+      return {
+        label: 'Completed',
+        icon: <CheckCircle2 className="w-2.5 h-2.5 text-white stroke-[2.5]" />,
+        classes: 'bg-emerald-500 text-white shadow-xs border border-emerald-400/20'
+      };
     }
+
+    if (raw === 'FAILED' || raw === 'DECLINED' || raw === 'REJECTED' || raw === 'EXPIRED' || raw === 'CANCELLED' || isNowpaymentsExpired) {
+      let label = 'Failed';
+      if (raw === 'DECLINED' || raw === 'REJECTED') label = 'Declined';
+      else if (raw === 'EXPIRED' || isNowpaymentsExpired) label = 'Expired';
+      else if (raw === 'CANCELLED') label = 'Cancelled';
+
+      return {
+        label,
+        icon: <XCircle className="w-2.5 h-2.5 text-white stroke-[2.5]" />,
+        classes: 'bg-rose-500 text-white shadow-xs border border-rose-400/20'
+      };
+    }
+
+    return {
+      label: 'Pending',
+      icon: <Clock className="w-2.5 h-2.5 text-white stroke-[2.5] animate-pulse" />,
+      classes: 'bg-amber-500 text-white shadow-xs border border-amber-400/20'
+    };
   };
 
   const formatDate = (timestamp: any) => {
@@ -778,7 +808,7 @@ export default function ActivityLog({ userId, isLightTheme = false }: ActivityLo
         ) : (
           filteredTransactions.map((tx) => {
             const meta = getTxTypeMeta(tx);
-            const statusMeta = getStatusBadge(tx.status);
+            const statusMeta = getStatusBadge(tx.status, tx);
             const isCredit = meta.isCredit;
 
             return (
@@ -847,7 +877,7 @@ export default function ActivityLog({ userId, isLightTheme = false }: ActivityLo
       {/* 4. Realistic Institutional Transaction Receipt Modal with Official Tether (USDT) Logo */}
       {selectedTx && (() => {
         const meta = getTxTypeMeta(selectedTx);
-        const statusMeta = getStatusBadge(selectedTx.status);
+        const statusMeta = getStatusBadge(selectedTx.status, selectedTx);
         const isCredit = meta.isCredit;
 
         return (

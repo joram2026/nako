@@ -57,7 +57,7 @@ export interface ReferralDepositConfig {
   tiers?: DepositBonusTier[];
 }
 
-export type TransactionStatus = 'PENDING APPROVAL' | 'APPROVED' | 'DECLINED';
+export type TransactionStatus = 'PENDING APPROVAL' | 'APPROVED' | 'DECLINED' | 'FAILED' | 'EXPIRED' | 'CANCELLED';
 
 export interface Transaction {
   id: string;
@@ -67,7 +67,7 @@ export interface Transaction {
   title?: string;
   amount: number; // in USD
   localAmount?: number; // in shillings/local currency
-  status: TransactionStatus;
+  status: TransactionStatus | string;
   createdAt: any; // Firestore Timestamp
   evidence?: string; // base64 string or url
   paymentMessage?: string; // payment confirmation message text
@@ -80,6 +80,16 @@ export interface Transaction {
   feeAmount?: number;  // fee in USD (e.g. 15% standard or 50% early)
   netAmount?: number;  // amount user actually receives (e.g. 85% or 50%)
   isCredit?: boolean | null;
+  gateway?: string;
+  gatewayStatus?: string;
+  gatewayCredited?: boolean;
+  nowpaymentsPaymentId?: string;
+  expiresAtMs?: number;
+  failedReason?: string;
+  payAmount?: number;
+  priceAmount?: number;
+  actuallyPaidCoin?: number;
+  txHash?: string;
   aiAudit?: {
     isValid: boolean;
     confidence: number;
@@ -297,3 +307,14 @@ export interface WithdrawalConfig {
   autoEnforceContractWarning?: boolean; // Whether active contract warning modal is shown
   updatedAt?: any;
 }
+
+export interface SlideshowBanner {
+  id: string;
+  imageUrl: string;
+  title?: string;
+  linkUrl?: string;
+  actionType?: 'deposit' | 'trade' | 'earn' | 'link' | 'none';
+  order?: number;
+  active?: boolean;
+}
+
