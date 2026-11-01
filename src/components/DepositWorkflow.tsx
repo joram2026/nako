@@ -592,7 +592,7 @@ export default function DepositWorkflow({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       console.error('Error starting automated deposit:', err);
-      setErrorState(err.message || 'Unable to connect to NOWPayments gateway.');
+      setErrorState(err.message || 'Unable to connect to the automated deposit system.');
       toast.error(err.message || 'Unable to start deposit.');
     } finally {
       setIsCreatingOrder(false);
@@ -990,7 +990,7 @@ export default function DepositWorkflow({
                 {isCreatingOrder ? (
                   <>
                     <RefreshCw size={18} className="animate-spin" />
-                    <span>Connecting to NOWPayments Gateway...</span>
+                    <span>Generating Secure Deposit Address...</span>
                   </>
                 ) : (
                   <>
@@ -1037,7 +1037,7 @@ export default function DepositWorkflow({
                 )}
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
                   <ShieldCheck size={13} className="text-emerald-500" />
-                  <span>Secure NOWPayments Terminal</span>
+                  <span>Secure Deposit Terminal</span>
                 </span>
               </div>
             </div>
@@ -1173,7 +1173,7 @@ export default function DepositWorkflow({
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-600 font-mono space-y-1">
                   <div>Payment ID: <strong className="text-slate-900">{activeOrder.paymentId}</strong></div>
                   <div>Network: <strong className="text-slate-900">{activeOrder.network}</strong></div>
-                  <div>Settled: <strong className="text-emerald-600">AUTOMATED VIA NOWPAYMENTS</strong></div>
+                  <div>Settled: <strong className="text-emerald-600">AUTOMATED ON-CHAIN SETTLEMENT</strong></div>
                 </div>
 
                 <button
@@ -1231,7 +1231,7 @@ export default function DepositWorkflow({
                         Deposit Address ({activeOrder.network})
                       </label>
                       <span className="text-[10px] font-bold text-emerald-600">
-                        NOWPayments Dedicated Address
+                        Dedicated Deposit Address
                       </span>
                     </div>
                     
@@ -1273,7 +1273,7 @@ export default function DepositWorkflow({
                   {showManualFallback && (
                     <div className="p-4 pt-1 border-t border-slate-100 space-y-3 animate-fadeIn">
                       <p className="text-[11px] text-slate-500">
-                        NOWPayments verifies payments automatically. However, if you transferred from an internal exchange off-chain, you may attach a screenshot here:
+                        Our automated system verifies payments on-chain automatically. However, if you transferred from an internal exchange off-chain, you may attach a screenshot here:
                       </p>
 
                       {!manualEvidence ? (

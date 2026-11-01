@@ -120,7 +120,7 @@ export default async function handler(req: any, res: any) {
 
     const npData = await npRes.json();
     if (!npRes.ok) {
-      throw new Error(npData.message || npData.error || 'Failed to create payment with NOWPayments.');
+      throw new Error(npData.message || npData.error || 'Failed to create automated deposit payment.');
     }
 
     const paymentId = String(npData.payment_id);

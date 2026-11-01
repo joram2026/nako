@@ -117,7 +117,7 @@ export async function createNowPaymentsPayment({
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || data.error || 'Failed to create payment with NOWPayments.');
+    throw new Error(data.message || data.error || 'Failed to create automated deposit payment.');
   }
 
   return {

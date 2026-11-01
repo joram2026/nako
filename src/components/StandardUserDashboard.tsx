@@ -568,9 +568,9 @@ export default function StandardUserDashboard({
     );
   }, [userTransactions]);
 
-  // Unread count: items whose ID is NOT in readNotificationIds AND have status APPROVED or DECLINED
+  // Unread count: items in the latest 3 notifications whose ID is NOT in readNotificationIds AND have status APPROVED or DECLINED
   const unreadNotificationCount = useMemo(() => {
-    return notificationItems.filter(item => 
+    return notificationItems.slice(0, 3).filter(item => 
       !readNotificationIds.includes(item.id) && 
       (item.status === 'APPROVED' || item.status === 'DECLINED')
     ).length;
@@ -622,15 +622,15 @@ export default function StandardUserDashboard({
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
-  // Filtered notifications list based on active tab
+  // Filtered notifications list based on active tab - limited to the latest 3 transactions to avoid a long list
   const filteredNotifications = useMemo(() => {
+    let list = notificationItems;
     if (notificationFilter === 'deposits') {
-      return notificationItems.filter(tx => tx.type?.includes('deposit'));
+      list = notificationItems.filter(tx => tx.type?.includes('deposit'));
+    } else if (notificationFilter === 'withdrawals') {
+      list = notificationItems.filter(tx => tx.type?.includes('withdraw'));
     }
-    if (notificationFilter === 'withdrawals') {
-      return notificationItems.filter(tx => tx.type?.includes('withdraw'));
-    }
-    return notificationItems;
+    return list.slice(0, 3);
   }, [notificationItems, notificationFilter]);
 
   // Helper to determine active signal window for expert (1 hour valid duration from start time)
@@ -3749,7 +3749,7 @@ export default function StandardUserDashboard({
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-zinc-500">Transaction updates & approval alerts</p>
+                          <p className="text-[10px] text-zinc-500">Latest 3 transaction updates & approval alerts</p>
                         </div>
                       </div>
 
@@ -3789,7 +3789,7 @@ export default function StandardUserDashboard({
                       >
                         <span>All</span>
                         <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${notificationFilter === 'all' ? 'bg-white/20 text-white' : 'bg-zinc-200 text-zinc-700'}`}>
-                          {notificationItems.length}
+                          {Math.min(notificationItems.length, 3)}
                         </span>
                       </button>
 
@@ -3804,7 +3804,7 @@ export default function StandardUserDashboard({
                       >
                         <span>Deposits</span>
                         <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${notificationFilter === 'deposits' ? 'bg-white/20 text-white' : 'bg-zinc-200 text-zinc-700'}`}>
-                          {notificationItems.filter(t => t.type?.includes('deposit')).length}
+                          {Math.min(notificationItems.filter(t => t.type?.includes('deposit')).length, 3)}
                         </span>
                       </button>
 
@@ -3819,7 +3819,7 @@ export default function StandardUserDashboard({
                       >
                         <span>Withdrawals</span>
                         <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${notificationFilter === 'withdrawals' ? 'bg-white/20 text-white' : 'bg-zinc-200 text-zinc-700'}`}>
-                          {notificationItems.filter(t => t.type?.includes('withdraw')).length}
+                          {Math.min(notificationItems.filter(t => t.type?.includes('withdraw')).length, 3)}
                         </span>
                       </button>
                     </div>
@@ -6471,7 +6471,7 @@ export default function StandardUserDashboard({
                       </div>
                     </div>
 
-                    {/* Quick Info Badges: Main Wallet, Movable, Contracted */}
+                    {/* Quick Info Badges: Main Wallet, Liquid, Trading */}
                     {(() => {
                       const { lockedCapital, freeTransferrable } = getCopyTradeLockedAndFree();
                       return (
@@ -6483,14 +6483,14 @@ export default function StandardUserDashboard({
                             </span>
                           </div>
 
-                          <div id="trade-tab-movable-badge" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500 text-white text-[10px] font-bold shadow-xs">
+                          <div id="trade-tab-liquid-badge" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500 text-white text-[10px] font-bold shadow-xs">
                             <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                            <span>Movable: ${freeTransferrable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span>Liquid: ${freeTransferrable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
 
                           {lockedCapital > 0 && (
-                            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-bold shadow-xs">
-                              <span>Contracted: ${lockedCapital.toFixed(2)}</span>
+                            <div id="trade-tab-trading-badge" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-bold shadow-xs">
+                              <span>Trading: ${lockedCapital.toFixed(2)}</span>
                             </div>
                           )}
                         </div>
@@ -7932,20 +7932,20 @@ export default function StandardUserDashboard({
           .sort((a, b) => (Number(a.minCapital ?? 0) - Number(b.minCapital ?? 0)) || (Number(a.dayProfitRate ?? 0) - Number(b.dayProfitRate ?? 0)));
 
         return (
-          <div className={`fixed inset-0 z-50 overflow-y-auto animate-fade-in ${
-            isLightTheme ? 'bg-[#f4f5f8] text-zinc-900' : 'bg-slate-900 text-white'
+          <div className={`fixed inset-0 z-50 overflow-y-auto animate-fade-in font-sans ${
+            isLightTheme ? 'bg-[#f4f5f8] text-zinc-900' : 'bg-[#0b0e14] text-white'
           }`}>
             {/* Top Navigation Header Bar */}
             <div className={`sticky top-0 z-30 border-b backdrop-blur-md px-4 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-3 ${
-              isLightTheme ? 'bg-white/95 border-slate-200 shadow-xs' : 'bg-slate-900/95 border-slate-800 shadow-sm'
+              isLightTheme ? 'bg-white/95 border-zinc-200/90 shadow-xs' : 'bg-[#151a23]/95 border-slate-800/90 shadow-sm'
             }`}>
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   type="button"
                   onClick={() => setSelectedContractForDetail(null)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer border shrink-0 shadow-2xs ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border shrink-0 shadow-2xs ${
                     isLightTheme
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
                       : 'bg-slate-800 hover:bg-slate-700 text-zinc-200 border-slate-700'
                   }`}
                 >
@@ -7953,7 +7953,7 @@ export default function StandardUserDashboard({
                   <span>Back</span>
                 </button>
                 <div className="min-w-0">
-                  <h2 className={`text-sm sm:text-base font-black truncate ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
+                  <h2 className={`text-sm sm:text-base font-bold truncate ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
                     Contract Details
                   </h2>
                 </div>
@@ -7962,20 +7962,12 @@ export default function StandardUserDashboard({
               {/* Status Badge & Close */}
               <div className="flex items-center gap-2 shrink-0">
                 {contract.isUnlocked ? (
-                  <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border flex items-center gap-1 shadow-2xs ${
-                    isLightTheme 
-                      ? 'bg-emerald-100 text-emerald-950 border-emerald-300' 
-                      : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                  }`}>
-                    <Unlock size={12} className="shrink-0" /> Unlocked
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500 text-white text-[10px] sm:text-xs font-bold shadow-xs">
+                    <Unlock size={12} className="shrink-0 text-white" /> Unlocked
                   </span>
                 ) : (
-                  <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border flex items-center gap-1 shadow-2xs ${
-                    isLightTheme 
-                      ? 'bg-emerald-50 text-emerald-900 border-emerald-300' 
-                      : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                  }`}>
-                    <Lock size={12} className="shrink-0 text-emerald-700 dark:text-emerald-400" /> Active ({contract.progressPct}%)
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500 text-white text-[10px] sm:text-xs font-bold shadow-xs">
+                    <Lock size={12} className="shrink-0 text-white" /> Active ({contract.progressPct}%)
                   </span>
                 )}
 
@@ -7984,7 +7976,7 @@ export default function StandardUserDashboard({
                   onClick={() => setSelectedContractForDetail(null)}
                   className={`p-1.5 sm:p-2 rounded-xl border transition-all cursor-pointer shadow-2xs ${
                     isLightTheme 
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300' 
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200' 
                       : 'bg-slate-800 hover:bg-slate-700 text-zinc-300 border-slate-700'
                   }`}
                   title="Close Page"
@@ -7999,7 +7991,7 @@ export default function StandardUserDashboard({
               
               {/* Unified Contract Overview Card */}
               <div className={`p-4 sm:p-5 rounded-3xl border shadow-sm space-y-4 ${
-                isLightTheme ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-800'
+                isLightTheme ? 'bg-white border-zinc-200/90' : 'bg-[#151a23] border-slate-800/90'
               }`}>
                 {/* Expert Info & Pair */}
                 <div className="flex items-center justify-between gap-3">
@@ -8009,80 +8001,76 @@ export default function StandardUserDashboard({
                       name={trade.leadName} 
                       className="w-12 h-12 shrink-0" 
                       size={140} 
-                      roundedClassName="rounded-full" 
-                      borderClassName="border-2 border-emerald-500" 
+                      roundedClassName="rounded-2xl" 
+                      borderClassName="border-2 border-emerald-500/80 shadow-xs" 
                     />
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[9.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border ${
-                          isLightTheme 
-                            ? 'bg-emerald-50 text-emerald-900 border-emerald-200' 
-                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        }`}>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500 text-white text-[9.5px] font-bold shadow-xs">
                           {trade.tradingPair || 'BTC/USDT'}
                         </span>
-                        <span className={`text-[9.5px] font-bold font-mono ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                          Standard Lead
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-800 text-white text-[9.5px] font-bold shadow-xs">
+                          Verified Lead
                         </span>
                       </div>
-                      <h1 className={`text-lg font-black tracking-tight mt-0.5 truncate ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
+                      <h1 className={`text-base sm:text-lg font-bold tracking-tight mt-1 truncate ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
                         {trade.leadName}
                       </h1>
                     </div>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className={`text-[9.5px] uppercase font-black tracking-wider block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                      Yield / Day
+                    <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-500 dark:text-zinc-400 block mb-0.5">
+                      Daily Yield
                     </span>
-                    <span className="text-sm font-black font-mono text-emerald-700 dark:text-emerald-400">
+                    <span className="text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                       {getLeadDailyProfitRange(lead)}
                     </span>
                   </div>
                 </div>
 
                 {/* Grid of Key Info: Traded Capital, Accrued Profit, Duration, Target Date */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs pt-1">
-                  <div className={`p-3 rounded-2xl border shadow-2xs ${
-                    isLightTheme ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 text-xs">
+                  <div className={`p-3 rounded-2xl border text-center shadow-2xs ${
+                    isLightTheme ? 'bg-zinc-50/80 border-zinc-200/80' : 'bg-slate-900/60 border-slate-800/80'
                   }`}>
-                    <span className={`text-[9px] uppercase font-black tracking-wider block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-500 dark:text-zinc-400 block mb-0.5">
                       Traded Capital
                     </span>
-                    <span className={`text-base font-black block mt-1 ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
-                      ${tradeCapital.toFixed(2)}
+                    <span className={`text-sm sm:text-base font-bold block mt-1 tabular-nums ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
+                      ${tradeCapital.toFixed(2)} USD
                     </span>
                   </div>
 
-                  <div className={`p-3 rounded-2xl border shadow-2xs ${
-                    isLightTheme ? 'bg-emerald-50/90 border-emerald-300' : 'bg-emerald-950/30 border-emerald-800/40'
+                  <div className={`p-3 rounded-2xl border text-center shadow-2xs ${
+                    isLightTheme ? 'bg-zinc-50/80 border-zinc-200/80' : 'bg-slate-900/60 border-slate-800/80'
                   }`}>
-                    <span className={`text-[9px] uppercase font-black tracking-wider block ${isLightTheme ? 'text-emerald-900' : 'text-emerald-400'}`}>
+                    <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-500 dark:text-zinc-400 block mb-0.5">
                       Accrued Profit
                     </span>
-                    <span className={`text-base font-black block mt-1 ${isLightTheme ? 'text-emerald-700' : 'text-emerald-400'}`}>
-                      +${netProfit.toFixed(2)}
+                    <span className="text-sm sm:text-base font-bold block mt-1 text-emerald-600 dark:text-emerald-400 tabular-nums">
+                      +${netProfit.toFixed(2)} USD
                     </span>
                   </div>
 
-                  <div className={`p-3 rounded-2xl border shadow-2xs ${
-                    isLightTheme ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'
+                  <div className={`p-3 rounded-2xl border text-center shadow-2xs ${
+                    isLightTheme ? 'bg-zinc-50/80 border-zinc-200/80' : 'bg-slate-900/60 border-slate-800/80'
                   }`}>
-                    <span className={`text-[9px] uppercase font-black tracking-wider block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-500 dark:text-zinc-400 block mb-0.5">
                       Duration
                     </span>
-                    <span className={`text-base font-black block mt-1 ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
+                    <span className={`text-sm sm:text-base font-bold block mt-1 ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
                       {contract.durationDays} Days
                     </span>
                   </div>
 
-                  <div className={`p-3 rounded-2xl border shadow-2xs ${
-                    isLightTheme ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'
+                  <div className={`p-3 rounded-2xl border text-center shadow-2xs ${
+                    isLightTheme ? 'bg-zinc-50/80 border-zinc-200/80' : 'bg-slate-900/60 border-slate-800/80'
                   }`}>
-                    <span className={`text-[9px] uppercase font-black tracking-wider block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-500 dark:text-zinc-400 block mb-0.5">
                       Target Date
                     </span>
-                    <span className={`text-xs sm:text-[13px] font-black block mt-1.5 truncate ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
+                    <span className={`text-xs sm:text-[13px] font-bold block mt-1.5 truncate ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
                       {contract.targetEndDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
@@ -8090,30 +8078,30 @@ export default function StandardUserDashboard({
 
                 {/* Progress Bar & Countdown */}
                 <div className={`p-3 sm:p-3.5 rounded-2xl border space-y-2 ${
-                  isLightTheme ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/50 border-slate-800'
+                  isLightTheme ? 'bg-zinc-50/80 border-zinc-200/80' : 'bg-slate-900/60 border-slate-800/80'
                 }`}>
-                  <div className="flex justify-between items-center text-xs font-mono">
-                    <span className={`font-bold flex items-center gap-1.5 ${isLightTheme ? 'text-zinc-800' : 'text-zinc-300'}`}>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className={`font-semibold flex items-center gap-1.5 ${isLightTheme ? 'text-zinc-800' : 'text-zinc-300'}`}>
                       <Clock size={13} className="text-emerald-600 shrink-0" />
-                      <span>Progress: <strong>{contract.workdaysElapsed} of {contract.durationDays} Days</strong></span>
+                      <span>Progress: <strong className="font-bold">{contract.workdaysElapsed} of {contract.durationDays} Days</strong></span>
                     </span>
-                    <span className="font-black text-emerald-700 dark:text-emerald-400">
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                       {contract.progressPct}%
                     </span>
                   </div>
 
-                  <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden relative shadow-inner">
+                  <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden relative shadow-inner">
                     <div 
                       className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700"
                       style={{ width: `${Math.max(contract.progressPct, 1)}%` }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] font-mono">
-                    <span className={isLightTheme ? 'text-zinc-600' : 'text-zinc-400'}>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className={isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}>
                       {contract.isUnlocked ? 'Contract Complete' : `${contract.workdaysRemaining} workdays remaining`}
                     </span>
-                    <span className={`font-bold ${isLightTheme ? 'text-emerald-800' : 'text-emerald-300'}`}>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
                       Release: 100% Principal
                     </span>
                   </div>
@@ -8122,20 +8110,16 @@ export default function StandardUserDashboard({
 
               {/* Executed Signals Log */}
               <div className={`p-4 sm:p-5 rounded-3xl border space-y-3.5 shadow-sm ${
-                isLightTheme ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-800'
+                isLightTheme ? 'bg-white border-zinc-200/90' : 'bg-[#151a23] border-slate-800/90'
               }`}>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <h3 className={`text-xs sm:text-sm font-black uppercase tracking-wider flex items-center gap-2 ${
+                  <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
                     isLightTheme ? 'text-zinc-950' : 'text-white'
                   }`}>
                     <History size={16} className="text-emerald-600 shrink-0" />
                     <span>Execution Logs ({Array.isArray(trade.executedSignals) ? trade.executedSignals.length : 0})</span>
                   </h3>
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border ${
-                    isLightTheme 
-                      ? 'bg-emerald-100 text-emerald-950 border-emerald-300' 
-                      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                  }`}>
+                  <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500 text-white shadow-xs">
                     Settle Ledger
                   </span>
                 </div>
@@ -8155,57 +8139,53 @@ export default function StandardUserDashboard({
                       return (
                         <div 
                           key={idx} 
-                          className={`p-3.5 rounded-2xl border space-y-2.5 text-xs font-mono transition-all shadow-2xs ${
-                            isLightTheme ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/80 border-slate-800'
+                          className={`p-3.5 rounded-2xl border space-y-2.5 text-xs transition-all shadow-2xs ${
+                            isLightTheme ? 'bg-zinc-50/80 border-zinc-200/80' : 'bg-slate-900/60 border-slate-800/80'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className={`font-black text-[10px] px-2 py-0.5 rounded-md border ${
-                                isLightTheme ? 'bg-slate-100 text-slate-800 border-slate-300' : 'bg-slate-800 text-slate-200 border-slate-700'
-                              }`}>
+                              <span className="font-bold text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-white shadow-xs">
                                 {sig.code}
                               </span>
-                              <span className={`font-black text-[10px] px-2 py-0.5 rounded-md border ${
-                                isLightTheme ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              }`}>
+                              <span className="font-bold text-[10px] px-2 py-0.5 rounded-md bg-emerald-500 text-white shadow-xs">
                                 {pair}
                               </span>
-                              <span className={`text-[10.5px] font-medium ${isLightTheme ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                              <span className={`text-[10.5px] font-semibold ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>
                                 {sig.time || 'Settled'}
                               </span>
                             </div>
-                            <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase flex items-center gap-1">
                               <CheckCircle2 size={12} /> Settled
                             </span>
                           </div>
 
                           {/* Metric breakdown */}
                           <div className={`p-2.5 rounded-xl border grid grid-cols-3 gap-2 text-[10.5px] ${
-                            isLightTheme ? 'bg-white border-slate-200 shadow-2xs' : 'bg-slate-900 border-slate-800'
+                            isLightTheme ? 'bg-white border-zinc-200/80 shadow-2xs' : 'bg-slate-900 border-slate-800'
                           }`}>
                             <div>
-                              <span className={`text-[9px] uppercase font-black block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>Capital</span>
-                              <span className={`font-black ${isLightTheme ? 'text-zinc-950' : 'text-zinc-200'}`}>
+                              <span className="text-[9px] uppercase font-semibold text-zinc-500 dark:text-zinc-400 block mb-0.5">Capital</span>
+                              <span className={`font-bold tabular-nums ${isLightTheme ? 'text-zinc-950' : 'text-zinc-200'}`}>
                                 ${tradedAmount.toFixed(2)}
                               </span>
                             </div>
                             <div>
-                              <span className={`text-[9px] uppercase font-black block ${isLightTheme ? 'text-zinc-500' : 'text-zinc-400'}`}>Entry &rarr; Exit</span>
-                              <span className="font-bold text-zinc-400">
-                                <span className={isLightTheme ? 'text-zinc-800' : 'text-zinc-300'}>${entryP}</span> &rarr; <span className={isLightTheme ? 'text-emerald-700 font-black' : 'text-emerald-400 font-bold'}>${exitP}</span>
+                              <span className="text-[9px] uppercase font-semibold text-zinc-500 dark:text-zinc-400 block mb-0.5">Entry &rarr; Exit</span>
+                              <span className="font-medium text-zinc-400 tabular-nums">
+                                <span className={isLightTheme ? 'text-zinc-800' : 'text-zinc-300'}>${entryP}</span> &rarr; <span className="text-emerald-600 dark:text-emerald-400 font-bold">${exitP}</span>
                               </span>
                             </div>
                             <div className="text-right">
-                              <span className={`text-[9px] uppercase font-black block ${isLightTheme ? 'text-emerald-800' : 'text-emerald-400'}`}>Net Profit</span>
-                              <span className="font-black text-emerald-700 dark:text-emerald-400">
+                              <span className="text-[9px] uppercase font-semibold text-emerald-600 dark:text-emerald-400 block mb-0.5">Net Profit</span>
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                                 +${netP.toFixed(2)}
                               </span>
                             </div>
                           </div>
 
                           <div className={`flex items-center justify-between text-[9.5px] border-t pt-1.5 ${
-                            isLightTheme ? 'border-slate-200 text-zinc-600' : 'border-slate-800/60 text-zinc-400'
+                            isLightTheme ? 'border-zinc-200/80 text-zinc-500' : 'border-slate-800/60 text-zinc-400'
                           }`}>
                             <span>Settle Timestamp</span>
                             <span className="font-medium">{execTimeFormatted}</span>
@@ -8214,8 +8194,8 @@ export default function StandardUserDashboard({
                       );
                     })
                   ) : (
-                    <div className={`p-4 text-center text-xs font-mono rounded-2xl border border-dashed ${
-                      isLightTheme ? 'bg-slate-50 border-slate-200 text-zinc-600' : 'border-slate-800 text-zinc-500'
+                    <div className={`p-4 text-center text-xs rounded-2xl border border-dashed ${
+                      isLightTheme ? 'bg-zinc-50 border-zinc-200 text-zinc-500' : 'border-slate-800 text-zinc-500'
                     }`}>
                       No executed signal records found yet.
                     </div>
@@ -8225,38 +8205,36 @@ export default function StandardUserDashboard({
 
               {/* Upgrade to Higher Tier Expert Action Banner */}
               <div className={`p-4 sm:p-5 rounded-3xl border shadow-sm space-y-3.5 ${
-                isLightTheme ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-800'
+                isLightTheme ? 'bg-white border-zinc-200/90' : 'bg-[#151a23] border-slate-800/90'
               }`}>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
                     <Sparkles size={16} className="text-emerald-500" />
-                    <h3 className={`text-xs sm:text-sm font-black uppercase tracking-wider ${
+                    <h3 className={`text-xs sm:text-sm font-bold uppercase tracking-wider ${
                       isLightTheme ? 'text-zinc-950' : 'text-white'
                     }`}>
                       Upgrade to Higher Experts
                     </h3>
                   </div>
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border ${
-                    isLightTheme ? 'bg-emerald-100 text-emerald-950 border-emerald-300' : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                  }`}>
+                  <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500 text-white shadow-xs">
                     Zero Penalty Rollover
                   </span>
                 </div>
 
                 {/* Key Points */}
                 <div className={`p-3 rounded-2xl border text-xs space-y-1.5 ${
-                  isLightTheme ? 'bg-emerald-50/40 border-emerald-200/60 text-zinc-700' : 'bg-slate-950/60 border-slate-800 text-zinc-300'
+                  isLightTheme ? 'bg-zinc-50/80 border-zinc-200/80 text-zinc-700' : 'bg-slate-900/60 border-slate-800/80 text-zinc-300'
                 }`}>
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                     <span className="text-[11.5px] leading-tight">
-                      <strong>100% Principal Rollover:</strong> ${tradeCapital.toFixed(2)} USD locked capital transfers instantly without forfeiture.
+                      <strong className="font-bold">100% Principal Rollover:</strong> ${tradeCapital.toFixed(2)} USD locked capital transfers instantly without forfeiture.
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                     <span className="text-[11.5px] leading-tight">
-                      <strong>Instant Activation:</strong> Unlock higher daily profit yields and premium signals immediately.
+                      <strong className="font-bold">Instant Activation:</strong> Unlock higher daily profit yields and premium signals immediately.
                     </span>
                   </div>
                 </div>
@@ -8277,8 +8255,8 @@ export default function StandardUserDashboard({
                         }}
                         className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-left cursor-pointer transition-all hover:scale-[1.01] hover:shadow-md active:scale-[0.99] group ${
                           isLightTheme 
-                            ? 'bg-emerald-50/60 hover:bg-emerald-100/90 border-emerald-200 text-zinc-900 shadow-2xs' 
-                            : 'bg-slate-950 hover:bg-slate-850 border-slate-800 text-white'
+                            ? 'bg-zinc-50/90 hover:bg-white border-zinc-200/90 hover:border-emerald-500/50 text-zinc-900 shadow-2xs' 
+                            : 'bg-slate-900/80 hover:bg-slate-900 border-slate-800 hover:border-emerald-500/40 text-white'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -8287,23 +8265,23 @@ export default function StandardUserDashboard({
                             name={target.name} 
                             className="w-10 h-10 shrink-0" 
                             size={100} 
-                            roundedClassName="rounded-full" 
-                            borderClassName="border-2 border-emerald-500"
+                            roundedClassName="rounded-2xl" 
+                            borderClassName="border-2 border-emerald-500/80 shadow-xs"
                           />
                           <div className="min-w-0">
-                            <p className="font-black text-xs truncate group-hover:text-emerald-700 transition-colors">{target.name}</p>
-                            <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-500 mt-0.5">
-                              <span className="font-bold text-emerald-800 dark:text-emerald-300">Min: ${target.minCapital ?? 50}</span>
+                            <p className="font-bold text-xs truncate group-hover:text-emerald-600 transition-colors">{target.name}</p>
+                            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-0.5">
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400">Min: ${target.minCapital ?? 50}</span>
                               <span>•</span>
                               <span>{target.winRate || '98.5%'}</span>
                             </div>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className="text-xs font-black font-mono text-emerald-700 dark:text-emerald-400 block">
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block tabular-nums">
                             {getLeadDailyProfitRange(target)}
                           </span>
-                          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-0.5 justify-end">
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-emerald-500 text-white text-[10px] font-bold shadow-xs mt-1">
                             Upgrade &rarr;
                           </span>
                         </div>
@@ -8312,28 +8290,33 @@ export default function StandardUserDashboard({
                   </div>
                 ) : (
                   <div className={`p-4 text-center rounded-2xl border text-xs font-medium ${
-                    isLightTheme ? 'bg-amber-50/40 border-amber-200 text-amber-950' : 'bg-slate-950/40 border-slate-800 text-amber-300'
+                    isLightTheme ? 'bg-zinc-50/80 border-zinc-200 text-zinc-700' : 'bg-slate-900/60 border-slate-800 text-zinc-300'
                   }`}>
                     🌟 You are currently trading with our top-tier expert lead! Maximum profit rates and premium signals are active on this contract.
                   </div>
                 )}
               </div>
 
-              {/* Contract Capital Security Badge Banner */}
+              {/* Modern Capital Assurance Verified Banner */}
               <div className={`p-4 sm:p-4.5 rounded-3xl border text-xs flex items-start gap-3.5 shadow-sm ${
                 isLightTheme 
-                  ? 'bg-amber-50/90 border-amber-300/80 text-amber-950' 
-                  : 'bg-blue-950/40 border-blue-800/50 text-blue-200'
+                  ? 'bg-white border-zinc-200/90 text-zinc-800' 
+                  : 'bg-[#151a23] border-slate-800/90 text-slate-200'
               }`}>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                  isLightTheme ? 'bg-amber-500 text-slate-950 shadow-2xs' : 'bg-blue-500 text-white'
-                }`}>
-                  <ShieldCheck size={18} strokeWidth={2.5} />
+                <div className="w-9 h-9 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 mt-0.5">
+                  <ShieldCheck size={20} strokeWidth={2.5} />
                 </div>
                 <div className="space-y-1 leading-relaxed text-xs">
-                  <p className="font-black text-sm">Contract Capital Security Verified</p>
-                  <p className={isLightTheme ? 'text-amber-900 font-medium' : 'opacity-90'}>
-                    Your traded principal of <strong>${tradeCapital.toFixed(2)} USD</strong> is securely backed under capital assurance protocols for the full <strong>{contract.durationDays} workday</strong> duration. Accumulated accrued profits of <strong>${netProfit.toFixed(2)} USD</strong> remain unlocked and ready for transfer.
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className={`font-bold text-sm ${isLightTheme ? 'text-zinc-950' : 'text-white'}`}>
+                      Capital Assurance Verified
+                    </h4>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500 text-white text-[9.5px] font-bold shadow-xs">
+                      <ShieldCheck size={10} className="text-white" /> 100% Protected
+                    </span>
+                  </div>
+                  <p className={`text-xs leading-relaxed ${isLightTheme ? 'text-zinc-500' : 'text-slate-400'}`}>
+                    Your traded principal of <strong className={`font-bold ${isLightTheme ? 'text-zinc-900' : 'text-white'}`}>${tradeCapital.toFixed(2)} USD</strong> is securely backed under capital assurance protocols for the full <strong>{contract.durationDays} workday</strong> duration. Accumulated accrued profits of <strong className="text-emerald-600 dark:text-emerald-400 font-bold">+${netProfit.toFixed(2)} USD</strong> remain unlocked and ready for transfer.
                   </p>
                 </div>
               </div>
@@ -8343,120 +8326,127 @@ export default function StandardUserDashboard({
         );
       })()}
 
-      {/* Trade Settlement Receipt Modal Ticket */}
+      {/* Modern Trade Settlement Receipt Modal */}
       {settledTradeReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fade-in">
-          <div className={`w-full max-w-md rounded-3xl border shadow-2xl p-5 sm:p-6 space-y-5 relative my-auto ${
-            isLightTheme ? 'bg-white border-emerald-300' : 'bg-slate-900 border-emerald-500/40 text-white'
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto animate-fade-in">
+          <div className={`w-full max-w-sm rounded-3xl border shadow-2xl p-5 relative my-auto font-sans text-left transition-all ${
+            isLightTheme 
+              ? 'bg-white border-zinc-200/90 text-zinc-900 shadow-emerald-500/10' 
+              : 'bg-[#151922] border-slate-800 text-white shadow-emerald-950/40'
           }`}>
-            {/* Top Settlement Banner */}
-            <div className="text-center space-y-2">
-              <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center text-emerald-500 shadow-inner animate-bounce-short">
-                <CheckCircle2 size={32} strokeWidth={2.5} />
+            {/* Top Close 'X' Button */}
+            <button
+              type="button"
+              onClick={() => setSettledTradeReceipt(null)}
+              className={`absolute top-4 right-4 p-1.5 rounded-full transition-colors cursor-pointer ${
+                isLightTheme 
+                  ? 'text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100' 
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              title="Close"
+            >
+              <X size={16} />
+            </button>
+
+            {/* Header: Icon + Status */}
+            <div className="text-center space-y-1.5 pt-1">
+              <div className="w-11 h-11 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-xs">
+                <CheckCircle2 size={24} strokeWidth={2.5} />
               </div>
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 font-mono">
-                  Official Trade Settlement Slip
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  Trade Executed
                 </span>
-                <h3 className={`text-xl font-black ${isLightTheme ? 'text-zinc-900' : 'text-white'}`}>
-                  Trade Settled & Profit Credited!
-                </h3>
-                <p className="text-xs text-zinc-500 font-mono">
+                <div className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  +${settledTradeReceipt.netProfit.toFixed(2)}
+                  <span className="text-xs font-bold ml-1 text-zinc-400 dark:text-slate-400">USD</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 dark:text-slate-500 mt-0.5">
                   Settled at {settledTradeReceipt.executedAt}
                 </p>
               </div>
             </div>
 
-            {/* Trader & Pair Header */}
-            <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
-              isLightTheme ? 'bg-zinc-50 border-zinc-200' : 'bg-slate-950/80 border-slate-800'
+            {/* Trader & Signal Card */}
+            <div className={`mt-3.5 p-2.5 rounded-2xl border flex items-center justify-between gap-2.5 ${
+              isLightTheme ? 'bg-zinc-50 border-zinc-200/80' : 'bg-slate-900/60 border-slate-800/80'
             }`}>
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <ExpertAvatar 
                   photoUrl={settledTradeReceipt.leadPhotoUrl} 
                   name={settledTradeReceipt.leadName} 
-                  className="w-10 h-10" 
-                  size={120} 
+                  className="w-8 h-8 shrink-0" 
+                  size={96} 
                   roundedClassName="rounded-full" 
                   borderClassName="border-2 border-emerald-500" 
                 />
                 <div className="min-w-0">
-                  <h4 className={`font-black text-sm truncate ${isLightTheme ? 'text-zinc-900' : 'text-white'}`}>
+                  <h4 className="font-bold text-xs truncate">
                     {settledTradeReceipt.leadName}
                   </h4>
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400">
-                    <span>Pair: <strong className="text-emerald-500 font-bold">{settledTradeReceipt.tradingPair}</strong></span>
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 dark:text-slate-400">
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">{settledTradeReceipt.tradingPair}</span>
+                    <span>•</span>
+                    <span className="text-[9px] uppercase font-bold px-1 rounded bg-zinc-200/60 dark:bg-slate-800 text-zinc-600 dark:text-slate-300">
+                      {settledTradeReceipt.signalCode}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="text-right shrink-0">
-                <span className="text-[10px] font-mono uppercase text-zinc-400 block font-bold">Signal Code</span>
-                <span className="font-mono font-black text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  {settledTradeReceipt.signalCode}
-                </span>
-              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 shrink-0">
+                Credited
+              </span>
             </div>
 
-            {/* Financial Payout Slip Card */}
-            <div className={`p-4 rounded-2xl border space-y-3 font-mono text-xs ${
-              isLightTheme ? 'bg-zinc-50 border-zinc-200' : 'bg-slate-950/90 border-slate-800'
+            {/* Financial Details List */}
+            <div className={`mt-3 p-3 rounded-2xl border text-xs divide-y ${
+              isLightTheme 
+                ? 'bg-zinc-50/60 border-zinc-200/80 divide-zinc-200/60 text-zinc-600' 
+                : 'bg-slate-900/40 border-slate-800/80 divide-slate-800/60 text-slate-300'
             }`}>
-              <div className="flex justify-between items-center text-zinc-500">
-                <span>Traded Principal (Locked):</span>
-                <span className={`font-bold ${isLightTheme ? 'text-zinc-900' : 'text-zinc-200'}`}>
+              <div className="flex justify-between items-center pb-2">
+                <span className="text-[11px] text-zinc-500 dark:text-slate-400">Traded Principal</span>
+                <span className="font-bold text-zinc-900 dark:text-white tabular-nums">
                   ${settledTradeReceipt.tradedCapital.toFixed(2)} USD
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-zinc-500">
-                <span>Gross Return Yield:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+              <div className="flex justify-between items-center py-2">
+                <span className="text-[11px] text-zinc-500 dark:text-slate-400">Gross Return</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                   +${settledTradeReceipt.grossProfit.toFixed(2)} USD
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-zinc-500">
-                <span>Expert Commission ({settledTradeReceipt.commissionPct}%):</span>
-                <span className="font-bold text-rose-500">
+              <div className="flex justify-between items-center py-2">
+                <span className="text-[11px] text-zinc-500 dark:text-slate-400">
+                  Commission ({settledTradeReceipt.commissionPct}%)
+                </span>
+                <span className="font-bold text-rose-500 tabular-nums">
                   -${settledTradeReceipt.commissionCut.toFixed(2)} USD
                 </span>
               </div>
 
-              <div className="pt-2 border-t border-zinc-200 dark:border-slate-800 flex justify-between items-center text-sm font-black">
-                <span className="text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Net Profit Credited:</span>
-                <span className="text-base font-black px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                  +${settledTradeReceipt.netProfit.toFixed(2)} USD
+              <div className="flex justify-between items-center py-2">
+                <span className="text-[11px] text-zinc-500 dark:text-slate-400">Execution Prices</span>
+                <span className="text-[11px] font-medium tabular-nums text-zinc-700 dark:text-slate-300">
+                  <span className="text-teal-500 font-bold">${settledTradeReceipt.entryPrice}</span>
+                  <span className="mx-1 text-zinc-400">→</span>
+                  <span className="text-emerald-500 font-bold">${settledTradeReceipt.exitPrice}</span>
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-[11px] font-semibold text-zinc-900 dark:text-white">Trade Balance</span>
+                <span className="font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  ${settledTradeReceipt.newBalance.toFixed(2)} USD
                 </span>
               </div>
             </div>
 
-            {/* Execution Ticket Details */}
-            <div className={`p-3 rounded-xl border grid grid-cols-2 gap-2 text-[11px] font-mono ${
-              isLightTheme ? 'bg-emerald-500/5 border-emerald-500/20 text-zinc-700' : 'bg-slate-950/60 border-slate-800 text-zinc-300'
-            }`}>
-              <div>
-                <span className="text-[9px] uppercase font-bold text-zinc-400 block">Entry Execution Price</span>
-                <span className="font-bold text-teal-400">${settledTradeReceipt.entryPrice} USDT</span>
-              </div>
-              <div className="text-right">
-                <span className="text-[9px] uppercase font-bold text-zinc-400 block">Exit Settlement Price</span>
-                <span className="font-bold text-emerald-500">${settledTradeReceipt.exitPrice} USDT</span>
-              </div>
-            </div>
-
-            {/* Updated Copy Balance Counter Banner */}
-            <div className={`p-3 rounded-2xl border flex items-center justify-between text-xs font-mono ${
-              isLightTheme ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : 'bg-emerald-950/30 border-emerald-500/20 text-emerald-200'
-            }`}>
-              <span className="font-bold">Updated Copy Trade Balance:</span>
-              <strong className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                ${settledTradeReceipt.newBalance.toFixed(2)} USD
-              </strong>
-            </div>
-
             {/* Actions */}
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2 mt-3.5 pt-0.5">
               {settledTradeReceipt.leadObj && (
                 <button
                   type="button"
@@ -8469,9 +8459,9 @@ export default function StandardUserDashboard({
                     }
                     setSettledTradeReceipt(null);
                   }}
-                  className={`flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer border ${
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
                     isLightTheme 
-                      ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border-zinc-300' 
+                      ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border-zinc-200' 
                       : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
                   }`}
                 >
@@ -8481,9 +8471,9 @@ export default function StandardUserDashboard({
               <button
                 type="button"
                 onClick={() => setSettledTradeReceipt(null)}
-                className="flex-1 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg active:scale-[0.99]"
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/20 active:scale-[0.99]"
               >
-                Close Ticket
+                Done
               </button>
             </div>
           </div>
