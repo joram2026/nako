@@ -202,9 +202,9 @@ export default function App() {
       <div id="app-loading-screen" className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center gap-4 text-slate-900 font-sans">
         <div className="relative w-20 h-20 rounded-3xl bg-white border border-slate-200/90 p-3.5 flex items-center justify-center shadow-lg shadow-emerald-500/10 animate-logo-pulse mb-1">
           <img 
-            src="/icon.svg" 
+            src="/assets/aistudio/image_a10b7e83.png" 
             alt="Akuna Capital" 
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain rounded-2xl"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-emerald-500/5 to-transparent pointer-events-none rounded-3xl"></div>

@@ -1,109 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Dark Obsidian Slate Background -->
-    <radialGradient id="akunaDarkBg" cx="50%" cy="30%" r="85%">
-      <stop offset="0%" stop-color="#0f1f2e" />
-      <stop offset="55%" stop-color="#091420" />
-      <stop offset="100%" stop-color="#020617" />
-    </radialGradient>
-
-    <!-- Emerald Border Ring Gradient -->
-    <linearGradient id="emeraldRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399" stop-opacity="0.6" />
-      <stop offset="50%" stop-color="#10b981" stop-opacity="0.3" />
-      <stop offset="100%" stop-color="#059669" stop-opacity="0.1" />
-    </linearGradient>
-
-    <!-- Facet 1: Left Diagonal Apex (Vibrant Emerald) -->
-    <linearGradient id="akunaEmeraldLeft" x1="0%" y1="100%" x2="50%" y2="0%">
-      <stop offset="0%" stop-color="#047857" />
-      <stop offset="60%" stop-color="#10b981" />
-      <stop offset="100%" stop-color="#6ee7b7" />
-    </linearGradient>
-
-    <!-- Facet 2: Right Diagonal (Cyan-Emerald Quant Energy) -->
-    <linearGradient id="akunaCyanRight" x1="50%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a7f3d0" />
-      <stop offset="35%" stop-color="#10b981" />
-      <stop offset="75%" stop-color="#06b6d4" />
-      <stop offset="100%" stop-color="#0284c7" />
-    </linearGradient>
-
-    <!-- Facet 3: Dynamic Crossbar (High-Frequency Trading Pulse) -->
-    <linearGradient id="akunaCrossbar" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#34d399" />
-      <stop offset="50%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#38bdf8" />
-    </linearGradient>
-
-    <!-- Facet 4: Central Inner Chevron (Negative Space Shading) -->
-    <linearGradient id="akunaInnerGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#10b981" stop-opacity="0.4" />
-      <stop offset="100%" stop-color="#064e3b" stop-opacity="0.0" />
-    </linearGradient>
-
-    <!-- Deep Drop Shadow Filter -->
-    <filter id="akunaDropShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#000000" flood-opacity="0.8" />
-      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#10b981" flood-opacity="0.3" />
-    </filter>
-
-    <!-- Soft Glow Filter -->
-    <filter id="ambientGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="24" result="blur" />
-    </filter>
+    <clipPath id="squircleClip">
+      <rect width="512" height="512" rx="108" />
+    </clipPath>
   </defs>
+  <!-- Background Squircle: Vibrant Cyan/Teal #01b0c5 matching uploaded image -->
+  <rect width="512" height="512" rx="108" fill="#01b0c5" />
+  
+  <!-- Vector Emblem matching the user logo -->
+  <g clip-path="url(#squircleClip)">
+    <!-- Top Left Sail -->
+    <path d="M 256 68 L 256 272 C 235 260 178 206 178 140 C 178 86 230 68 256 68 Z" fill="#ffffff" />
+    <!-- Bottom Right Sail -->
+    <path d="M 256 240 L 256 444 C 277 432 334 380 334 314 C 334 260 282 240 256 240 Z" fill="#ffffff" />
 
-  <!-- Base Squircle Canvas -->
-  <rect width="512" height="512" rx="116" fill="url(#akunaDarkBg)" />
-
-  <!-- Ambient Emerald Radial Glow behind Monogram -->
-  <circle cx="256" cy="256" r="140" fill="#10b981" opacity="0.12" filter="url(#ambientGlow)" />
-
-  <!-- Outer Technical Perimeter Ring -->
-  <rect x="12" y="12" width="488" height="488" rx="104" fill="none" stroke="url(#emeraldRingGrad)" stroke-width="2.5" />
-
-  <!-- GEOMETRIC AKUNA CAPITAL 'A' MONOGRAM -->
-  <g filter="url(#akunaDropShadow)">
-    <!-- Left Angled Pillar of 'A' -->
-    <path 
-      d="M 256 86 
-         L 132 396 
-         L 194 396 
-         L 230 300 
-         L 256 226 
-         L 256 86 Z" 
-      fill="url(#akunaEmeraldLeft)" 
-    />
-
-    <!-- Right Angled Pillar of 'A' -->
-    <path 
-      d="M 256 86 
-         L 256 226 
-         L 282 300 
-         L 318 396 
-         L 380 396 
-         Z" 
-      fill="url(#akunaCyanRight)" 
-    />
-
-    <!-- Center Dynamic Horizontal Crossbar with Slanted Edges -->
-    <polygon 
-      points="202,328 310,328 296,288 216,288" 
-      fill="url(#akunaCrossbar)" 
-    />
-
-    <!-- Inner Core Apex Triangle -->
-    <polygon 
-      points="256,160 226,248 286,248" 
-      fill="#05141f" 
-    />
-
-    <!-- Sharp White Accent Highlight on Apex -->
-    <polygon 
-      points="256,86 244,124 256,118 268,124" 
-      fill="#ffffff" 
-      opacity="0.95" 
+    <!-- 1:1 Pixel-Accurate Image Overlay -->
+    <image 
+      href="/assets/aistudio/image_a10b7e83.png" 
+      xlink:href="/assets/aistudio/image_a10b7e83.png" 
+      x="0" 
+      y="0" 
+      width="512" 
+      height="512" 
+      preserveAspectRatio="none"
     />
   </g>
 </svg>

@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 import { CryptoNetwork, Transaction, UserAccount, CryptoPrice, ReferralDepositConfig } from '../types';
 import { 
-  ArrowLeft, Check, Copy, AlertCircle, RefreshCw,
+  ArrowLeft, ArrowRight, Check, Copy, AlertCircle, RefreshCw,
   Clock, ShieldCheck, Shield, CheckCircle2,
   Sparkles, Zap, QrCode, ExternalLink, ChevronDown, ChevronUp, UploadCloud
 } from 'lucide-react';
@@ -792,7 +792,7 @@ export default function DepositWorkflow({
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-900">{timeLeft} left</span>
                     </div>
                     <p className="text-xs text-amber-950/80 font-medium mt-0.5">
-                      Active session for <strong>{activeOrder.payAmount} {activeOrder.payCurrency} (${activeOrder.priceAmount} USD)</strong>.
+                      Active session for <strong>${activeOrder.priceAmount.toFixed(2)} USD ({activeOrder.network})</strong>.
                     </p>
                   </div>
                 </div>
@@ -985,21 +985,17 @@ export default function DepositWorkflow({
                 id="proceed-to-gateway-btn"
                 onClick={handleInitiateAutomatedPayment}
                 disabled={isCreatingOrder || parseFloat(amountUSDInput) <= 0 || isNaN(parseFloat(amountUSDInput))}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black py-4 rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-base cursor-pointer"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold py-3.5 sm:py-4 rounded-2xl shadow-lg shadow-emerald-500/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm sm:text-base cursor-pointer"
               >
                 {isCreatingOrder ? (
                   <>
-                    <RefreshCw size={18} className="animate-spin" />
-                    <span>Generating Secure Deposit Address...</span>
+                    <RefreshCw size={17} className="animate-spin" />
+                    <span>Please wait...</span>
                   </>
                 ) : (
                   <>
-                    <Zap size={18} className="fill-white" />
-                    <span>
-                      {parseFloat(amountUSDInput) > 0 
-                        ? `Proceed to Automated Deposit ($${amountUSDInput} USD)` 
-                        : 'Enter Deposit Amount'}
-                    </span>
+                    <span>Proceed</span>
+                    <ArrowRight size={17} />
                   </>
                 )}
               </button>
@@ -1008,42 +1004,43 @@ export default function DepositWorkflow({
         )}
 
         {/* ========================================================================= */}
-        {/* STEP 2: AUTOMATED NOWPAYMENTS PAYMENT TERMINAL                             */}
+        {/* STEP 2: AUTOMATED PAYMENT TERMINAL                                        */}
         {/* ========================================================================= */}
         {step === 'payment_terminal' && activeOrder && (
-          <div className="animate-fadeIn space-y-4" id="deposit-payment-terminal-view">
+          <div className="animate-fadeIn space-y-3.5 sm:space-y-4" id="deposit-payment-terminal-view">
             {/* Top Bar */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <button 
                 id="deposit-terminal-back-btn"
                 onClick={() => setStep('choose_network')}
-                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0 shadow-xs"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0 shadow-xs"
                 title="Change Network or Amount"
               >
-                <ArrowLeft size={18} strokeWidth={2.5} />
+                <ArrowLeft size={16} strokeWidth={2.5} />
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {!isFinished && !isExpired && (
                   <button
                     type="button"
                     id="cancel-terminal-order-btn"
                     onClick={handleCancelAndStartFresh}
                     disabled={isCancellingOrder}
-                    className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl border border-rose-200 transition-colors cursor-pointer"
+                    className="text-[11px] sm:text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 sm:px-3 py-1.5 rounded-xl border border-rose-200 transition-colors cursor-pointer"
                   >
-                    {isCancellingOrder ? 'Cancelling...' : 'Cancel Deposit'}
+                    {isCancellingOrder ? 'Cancelling...' : 'Cancel'}
                   </button>
                 )}
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                  <ShieldCheck size={13} className="text-emerald-500" />
-                  <span>Secure Deposit Terminal</span>
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 sm:px-3 py-1 rounded-full">
+                  <ShieldCheck size={12} className="text-emerald-500" />
+                  <span className="hidden xs:inline">Secure Deposit Terminal</span>
+                  <span className="xs:hidden">Secure</span>
                 </span>
               </div>
             </div>
 
             {/* Live Gateway Status Header Banner */}
-            <div className={`p-4 rounded-3xl border transition-all shadow-sm ${
+            <div className={`p-3 sm:p-3.5 rounded-2xl sm:rounded-3xl border transition-all shadow-xs ${
               isExpired
                 ? 'bg-rose-50 text-rose-900 border-rose-200'
                 : isFinished
@@ -1052,9 +1049,9 @@ export default function DepositWorkflow({
                 ? 'bg-blue-600 text-white border-blue-500'
                 : 'bg-white border-slate-200/90 text-slate-900'
             }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 ${
                     isExpired
                       ? 'bg-rose-100 text-rose-600'
                       : isFinished
@@ -1064,35 +1061,35 @@ export default function DepositWorkflow({
                       : 'bg-amber-100 text-amber-700'
                   }`}>
                     {isExpired ? (
-                      <AlertCircle size={24} className="stroke-[2.5]" />
+                      <AlertCircle size={18} className="stroke-[2.5]" />
                     ) : isFinished ? (
-                      <CheckCircle2 size={24} className="stroke-[2.5]" />
+                      <CheckCircle2 size={18} className="stroke-[2.5]" />
                     ) : pollingStatus === 'confirming' || pollingStatus === 'confirmed' || pollingStatus === 'sending' ? (
-                      <RefreshCw size={22} className="animate-spin" />
+                      <RefreshCw size={16} className="animate-spin" />
                     ) : (
-                      <Clock size={22} className="animate-pulse" />
+                      <Clock size={16} className="animate-pulse" />
                     )}
                   </div>
-                  <div>
-                    <h3 className="font-black text-sm tracking-tight uppercase">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-xs sm:text-sm tracking-tight uppercase truncate">
                       {isExpired
-                        ? 'Payment Duration Expired'
+                        ? 'Session Expired'
                         : isFinished
-                        ? 'Payment Confirmed & Credited'
+                        ? 'Payment Confirmed'
                         : pollingStatus === 'confirming' || pollingStatus === 'confirmed' || pollingStatus === 'sending'
-                        ? 'Transaction Detected on Blockchain'
-                        : 'Waiting for Your Transfer'}
+                        ? 'Transaction Detected'
+                        : 'Waiting for Transfer'}
                     </h3>
-                    <p className={`text-xs mt-0.5 font-medium ${
+                    <p className={`text-[11px] sm:text-xs truncate font-medium ${
                       isExpired ? 'text-rose-700' : isFinished || pollingStatus !== 'waiting' ? 'opacity-90' : 'text-slate-500'
                     }`}>
                       {isExpired
-                        ? 'Payment time elapsed with no funds detected on blockchain. Transaction marked as failed.'
+                        ? 'Payment duration expired.'
                         : isFinished
-                        ? 'Your account wallet has been credited successfully!'
+                        ? 'Your wallet has been credited!'
                         : pollingStatus === 'confirming' || pollingStatus === 'confirmed' || pollingStatus === 'sending'
-                        ? 'Waiting for final block confirmations (~1-2 min)...'
-                        : `Send exact amount to address below • Session active (${timeLeft})`}
+                        ? 'Confirming on blockchain (~1-2 min)...'
+                        : `Session active • ${timeLeft}`}
                     </p>
                   </div>
                 </div>
@@ -1101,34 +1098,34 @@ export default function DepositWorkflow({
                   type="button"
                   onClick={handleManualStatusCheck}
                   disabled={isCheckingStatus || isFinished || isExpired}
-                  className={`p-2 rounded-xl transition-all cursor-pointer ${
+                  className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer shrink-0 ${
                     isFinished || isExpired
                       ? 'hidden'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                   }`}
                   title="Check live on-chain status"
                 >
-                  <RefreshCw size={14} className={isCheckingStatus ? 'animate-spin text-emerald-600' : ''} />
+                  <RefreshCw size={13} className={isCheckingStatus ? 'animate-spin text-emerald-600' : ''} />
                 </button>
               </div>
             </div>
 
             {/* Expired / Failed State Card */}
             {isExpired ? (
-              <div className="bg-white rounded-3xl p-6 border border-rose-200 text-center space-y-4 shadow-sm animate-scaleUp">
-                <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-md">
-                  <AlertCircle size={36} strokeWidth={2.5} />
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-rose-200 text-center space-y-3.5 shadow-xs animate-scaleUp">
+                <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
+                  <AlertCircle size={28} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900">
+                  <h3 className="text-lg font-black text-slate-900">
                     Deposit Session Expired
                   </h3>
-                  <p className="text-sm text-slate-500 mt-1 font-medium">
-                    The 20-minute payment duration ended with no crypto transfer detected. This transaction has been marked as failed.
+                  <p className="text-xs text-slate-500 mt-1 font-medium">
+                    The payment duration ended with no crypto transfer detected.
                   </p>
                 </div>
 
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-600 font-mono space-y-1">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-600 font-mono space-y-1 text-left">
                   <div>Payment ID: <strong className="text-slate-900">{activeOrder.paymentId}</strong></div>
                   <div>Status: <strong className="text-rose-600">FAILED / EXPIRED</strong></div>
                 </div>
@@ -1136,28 +1133,28 @@ export default function DepositWorkflow({
                 <button
                   type="button"
                   onClick={handleCancelAndStartFresh}
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-3.5 rounded-2xl shadow-md cursor-pointer transition-all"
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl shadow-xs cursor-pointer transition-all text-sm"
                 >
                   Start New Deposit
                 </button>
               </div>
             ) : isFinished ? (
               /* Finished Celebration Card */
-              <div className="bg-white rounded-3xl p-6 border border-emerald-200 text-center space-y-4 shadow-sm animate-scaleUp">
-                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
-                  <CheckCircle2 size={36} strokeWidth={2.5} />
+              <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 border border-emerald-200 text-center space-y-3.5 shadow-xs animate-scaleUp">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
+                  <CheckCircle2 size={28} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900">
+                  <h3 className="text-lg font-black text-slate-900">
                     Deposit Successfully Completed!
                   </h3>
-                  <p className="text-sm text-slate-500 mt-1 font-medium">
-                    +${(creditedAmount || activeOrder.priceAmount).toFixed(2)} USD credited to your Movable Wallet
+                  <p className="text-xs text-slate-500 mt-1 font-medium">
+                    +${(creditedAmount || activeOrder.priceAmount).toFixed(2)} USD credited to your USDT Wallet
                   </p>
                 </div>
 
                 {actuallyPaidCrypto !== null && activeOrder.payAmount > 0 && Math.abs(actuallyPaidCrypto - activeOrder.payAmount) > 0.0001 && (
-                  <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl text-xs text-blue-900 font-medium text-left">
+                  <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-900 font-medium text-left">
                     {actuallyPaidCrypto < activeOrder.payAmount ? (
                       <span>
                         <strong>Adjusted for network fee:</strong> You sent <strong>{actuallyPaidCrypto} {currentSymbol}</strong>. Your account has been credited with the actual received amount: <strong>${(creditedAmount || activeOrder.priceAmount).toFixed(2)} USD</strong>.
@@ -1170,10 +1167,10 @@ export default function DepositWorkflow({
                   </div>
                 )}
 
-                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-600 font-mono space-y-1">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs text-slate-600 font-mono space-y-1 text-left">
                   <div>Payment ID: <strong className="text-slate-900">{activeOrder.paymentId}</strong></div>
                   <div>Network: <strong className="text-slate-900">{activeOrder.network}</strong></div>
-                  <div>Settled: <strong className="text-emerald-600">AUTOMATED ON-CHAIN SETTLEMENT</strong></div>
+                  <div>Settled: <strong className="text-emerald-600">AUTOMATED SETTLEMENT</strong></div>
                 </div>
 
                 <button
@@ -1185,7 +1182,7 @@ export default function DepositWorkflow({
                     setStep('choose_network');
                     onSuccess();
                   }}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black py-3.5 rounded-2xl shadow-md cursor-pointer transition-all"
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-xs cursor-pointer transition-all text-sm"
                 >
                   Done & View Wallet
                 </button>
@@ -1193,81 +1190,91 @@ export default function DepositWorkflow({
             ) : (
               <>
                 {/* QR Code and Address Card */}
-                <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm space-y-5 text-center">
-                  {/* Top Amount Highlight */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 uppercase">
-                      Exact Amount to Send
-                    </span>
-                    <div className="text-right">
-                      <span className="text-base font-black font-mono text-emerald-600 block">
-                        {activeOrder.payAmount} {currentSymbol}
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs space-y-3.5 sm:space-y-4 text-center">
+                  {/* Top Amount Highlight - Exact User Input Amount */}
+                  <div className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <div className="text-left">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase block tracking-wider">
+                        Amount to Send
                       </span>
-                      <span className="text-[11px] font-mono text-slate-400 block font-bold">
-                        ≈ ${activeOrder.priceAmount.toFixed(2)} USD
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {activeOrder.network}
                       </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base sm:text-lg font-black font-mono text-emerald-600 block">
+                        ${activeOrder.priceAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(activeOrder.priceAmount.toFixed(2))}
+                        className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors cursor-pointer"
+                        title="Copy amount"
+                      >
+                        <Copy size={13} />
+                      </button>
                     </div>
                   </div>
 
-                  {/* QR Code */}
-                  <div className="flex flex-col items-center justify-center space-y-2">
-                    <div className="p-3 bg-white border-2 border-slate-200 rounded-2xl shadow-xs inline-block">
+                  {/* QR Code - Responsive and Space-Friendly */}
+                  <div className="flex flex-col items-center justify-center space-y-1.5 py-0.5">
+                    <div className="p-2 sm:p-2.5 bg-white border-2 border-slate-200 rounded-2xl shadow-xs inline-block">
                       <img 
                         src={qrCodeUrl} 
                         alt="Deposit QR Code" 
-                        className="w-48 h-48 rounded-lg"
+                        className="w-36 h-36 sm:w-44 sm:h-44 rounded-lg object-contain"
                         loading="eager"
                       />
                     </div>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      Scan with Binance, Trust Wallet, MetaMask, or any crypto app
+                    <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium">
+                      Scan QR code or copy address below
                     </span>
                   </div>
 
                   {/* Deposit Address Box */}
                   <div className="space-y-1.5 text-left">
                     <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      <label className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                         Deposit Address ({activeOrder.network})
                       </label>
                       <span className="text-[10px] font-bold text-emerald-600">
-                        Dedicated Deposit Address
+                        Dedicated Address
                       </span>
                     </div>
                     
-                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-2.5">
-                      <span className="font-mono text-xs text-slate-800 break-all flex-1 font-bold select-all px-1">
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl p-2 sm:p-2.5">
+                      <span className="font-mono text-[11px] sm:text-xs text-slate-800 break-all flex-1 font-bold select-all px-1">
                         {activeOrder.payAddress}
                       </span>
                       <button
                         id="copy-terminal-address-btn"
                         onClick={() => handleCopy(activeOrder.payAddress)}
-                        className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-2 px-3 rounded-xl flex items-center gap-1.5 shadow-xs transition-all shrink-0 cursor-pointer text-xs"
+                        className="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-lg sm:rounded-xl flex items-center gap-1.5 shadow-xs transition-all shrink-0 cursor-pointer text-xs"
                       >
-                        {copied ? <Check size={14} className="stroke-[3]" /> : <Copy size={14} />}
+                        {copied ? <Check size={13} className="stroke-[3]" /> : <Copy size={13} />}
                         <span>{copied ? 'Copied' : 'Copy'}</span>
                       </button>
                     </div>
                   </div>
 
                   {/* Instructions */}
-                  <div className="p-3 bg-amber-50/80 border border-amber-200/90 rounded-2xl text-left text-xs text-amber-900 flex items-start gap-2.5">
-                    <Shield size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                    <p className="leading-relaxed font-medium">
-                      Send only <strong>{currentSymbol}</strong> via <strong>{activeOrder.network}</strong>. Once sent, our system detects the transaction within seconds and automatically credits your balance upon 1 network confirmation.
+                  <div className="p-2.5 sm:p-3 bg-amber-50/80 border border-amber-200/90 rounded-xl sm:rounded-2xl text-left text-[11px] sm:text-xs text-amber-900 flex items-start gap-2">
+                    <Shield size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                    <p className="leading-snug sm:leading-relaxed font-medium">
+                      Send only <strong>{currentSymbol}</strong> via <strong>{activeOrder.network}</strong>. Balance is automatically credited upon 1 network confirmation.
                     </p>
                   </div>
                 </div>
 
                 {/* Optional Fallback Accordion for Manual Proof (Edge Cases) */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden">
+                <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setShowManualFallback(!showManualFallback)}
-                    className="w-full px-4 py-3 text-xs font-bold text-slate-600 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="w-full px-3.5 py-2.5 text-[11px] sm:text-xs font-bold text-slate-600 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer"
                   >
-                    <span>Need to attach transaction receipt or TX Hash manually?</span>
-                    {showManualFallback ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    <span>Attach receipt or TX Hash manually (optional)</span>
+                    {showManualFallback ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>
 
                   {showManualFallback && (

@@ -2449,9 +2449,9 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
                 {/* Akuna Capital Rounded App Icon */}
                 <div className="w-18 h-18 rounded-2xl bg-zinc-950 border border-zinc-200 shadow-md flex items-center justify-center shrink-0 overflow-hidden select-none">
                   <img 
-                    src="/icon.svg" 
+                    src="/assets/aistudio/image_a10b7e83.png" 
                     alt="Akuna Capital" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     referrerPolicy="no-referrer"
                   />
                 </div>
@@ -3171,9 +3171,9 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
                 <div className="w-20 h-20 mx-auto rounded-3xl bg-zinc-950 border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10 flex items-center justify-center overflow-hidden relative group mb-3">
                   <div className="absolute inset-0 bg-emerald-500/10 rounded-3xl animate-pulse"></div>
                   <img 
-                    src="/icon.svg" 
+                    src="/assets/aistudio/image_a10b7e83.png" 
                     alt="Akuna Capital" 
-                    className="w-14 h-14 object-cover relative z-10"
+                    className="w-14 h-14 object-contain rounded-2xl relative z-10"
                     referrerPolicy="no-referrer"
                   />
                 </div>
@@ -3206,7 +3206,7 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
                   <div>
                     <strong className="text-zinc-800 text-xs block font-bold">Find the "Akuna Capital" Icon</strong>
                     <p className="text-[11px] text-zinc-500 leading-normal mt-0.5 font-medium">
-                      Look for the beautiful round logo with the letter <span className="text-emerald-700 font-bold">"A"</span> on your home screen or app drawer.
+                      Look for the teal app logo with the curved symbol on your home screen or app drawer.
                     </p>
                   </div>
                 </div>

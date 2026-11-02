@@ -3669,8 +3669,8 @@ export default function StandardUserDashboard({
               className="flex items-center gap-2.5 min-w-0 pr-2 cursor-pointer group"
               title="Open profile"
             >
-              <div className="w-8 h-8 rounded-xl bg-slate-800/90 border border-slate-700/80 p-1 flex items-center justify-center shrink-0 shadow-sm group-hover:border-slate-600 transition-colors">
-                <img src="/icon.svg" alt="Akuna Capital" className="w-full h-full object-contain" />
+              <div className="w-8 h-8 rounded-xl bg-slate-800/90 border border-slate-700/80 p-0.5 flex items-center justify-center shrink-0 shadow-sm group-hover:border-slate-600 transition-colors overflow-hidden">
+                <img src="/assets/aistudio/image_a10b7e83.png" alt="Akuna Capital" className="w-full h-full object-contain rounded-lg" />
               </div>
               <h1 className="font-bold text-base sm:text-lg tracking-tight text-white font-sans truncate group-hover:text-slate-200 transition-colors">
                 {profile?.fullName || user?.displayName || (user?.email ? user.email.split('@')[0] : 'User')}
@@ -4400,7 +4400,7 @@ export default function StandardUserDashboard({
                 <div className="max-w-4xl mx-auto">
                   <div className="flex justify-between items-start select-none">
                     <div>
-                      <span className="text-xs font-medium text-slate-400 block">Movable amount</span>
+                      <span className="text-xs font-medium text-slate-400 block">USDT Amount</span>
                       <div className="flex items-center gap-2 mt-1">
                         <h2 className={`text-2xl sm:text-3xl font-bold tracking-tight font-sans text-white transition-all duration-300 ${
                           isBalanceBlurred ? 'filter blur-md select-none pointer-events-none' : ''
@@ -4646,7 +4646,7 @@ export default function StandardUserDashboard({
                   <div className="max-w-4xl mx-auto">
                     <div className="flex justify-between items-start select-none">
                       <div>
-                        <span className="text-xs font-medium text-slate-400 block">Movable amount</span>
+                        <span className="text-xs font-medium text-slate-400 block">USDT Amount</span>
                         <div className="flex items-center gap-2 mt-1">
                           <h2 className={`text-2xl sm:text-3xl font-bold tracking-tight font-sans text-white transition-all duration-300 ${
                             isBalanceBlurred ? 'filter blur-md select-none pointer-events-none' : ''

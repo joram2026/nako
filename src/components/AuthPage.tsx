@@ -507,11 +507,11 @@ export default function AuthPage({ onSuccess, path, navigate }: AuthPageProps) {
       <header className="relative z-10 w-full max-w-[420px] flex flex-col items-center mb-6 text-center">
         {/* Brand Lockup - Clean Akuna Capital (DRW removed) */}
         <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200 shadow-xs mb-4">
-          <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-6 h-6 rounded-md overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
             <img 
-              src="/icon.svg" 
+              src="/assets/aistudio/image_a10b7e83.png" 
               alt="Akuna Capital" 
-              className="w-full h-full object-contain filter drop-shadow-xs"
+              className="w-full h-full object-contain rounded-md"
               referrerPolicy="no-referrer"
             />
           </div>

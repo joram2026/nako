@@ -1,43 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 180" width="680" height="180">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 680 180" width="680" height="180">
   <defs>
     <!-- Dark Navy Slate Base Container -->
     <radialGradient id="akunaLogoBg" cx="50%" cy="30%" r="90%">
       <stop offset="0%" stop-color="#0f1f2e" />
       <stop offset="100%" stop-color="#07111c" />
     </radialGradient>
-
-    <!-- Emerald Glow -->
-    <linearGradient id="emeraldGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#059669" />
-      <stop offset="50%" stop-color="#10b981" />
-      <stop offset="100%" stop-color="#34d399" />
-    </linearGradient>
-
-    <!-- Cyan-Emerald Accent -->
-    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981" />
-      <stop offset="100%" stop-color="#06b6d4" />
-    </linearGradient>
+    <clipPath id="logoSquircle">
+      <rect width="112" height="112" rx="26" />
+    </clipPath>
   </defs>
 
   <!-- Background Card -->
   <rect width="680" height="180" rx="28" fill="url(#akunaLogoBg)" stroke="#1e293b" stroke-width="1.5" />
 
-  <!-- Geometric 'A' Symbol on Left -->
-  <g transform="translate(42, 28) scale(0.24)">
-    <!-- Ambient Glow -->
-    <circle cx="256" cy="256" r="160" fill="#10b981" opacity="0.15" />
-
-    <!-- Left Pillar -->
-    <path d="M 256 86 L 132 396 L 194 396 L 230 300 L 256 226 L 256 86 Z" fill="url(#emeraldGrad)" />
-    <!-- Right Pillar -->
-    <path d="M 256 86 L 256 226 L 282 300 L 318 396 L 380 396 Z" fill="url(#cyanGrad)" />
-    <!-- Crossbar -->
-    <polygon points="202,328 310,328 296,288 216,288" fill="#ffffff" />
-    <!-- Inner Core -->
-    <polygon points="256,160 226,248 286,248" fill="#07111c" />
-    <!-- White Apex -->
-    <polygon points="256,86 244,124 256,118 268,124" fill="#ffffff" />
+  <!-- New Akuna Logo Symbol on Left -->
+  <g transform="translate(44, 34)">
+    <rect width="112" height="112" rx="26" fill="#01b0c5" />
+    <g clip-path="url(#logoSquircle)">
+      <image 
+        href="/assets/aistudio/image_a10b7e83.png" 
+        xlink:href="/assets/aistudio/image_a10b7e83.png" 
+        x="0" 
+        y="0" 
+        width="112" 
+        height="112" 
+        preserveAspectRatio="none"
+      />
+    </g>
   </g>
 
   <!-- Typography: AKUNA CAPITAL -->
@@ -45,7 +34,7 @@
     <text font-family="-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', Inter, sans-serif" font-weight="900" font-size="38" letter-spacing="4" fill="#FFFFFF">
       AKUNA
     </text>
-    <text x="180" font-family="-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', Inter, sans-serif" font-weight="300" font-size="38" letter-spacing="6" fill="#34d399">
+    <text x="180" font-family="-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', Inter, sans-serif" font-weight="300" font-size="38" letter-spacing="6" fill="#01b0c5">
       CAPITAL
     </text>
   </g>
