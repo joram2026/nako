@@ -5,7 +5,7 @@
     </clipPath>
   </defs>
   <!-- Background Squircle: Vibrant Cyan/Teal #01b0c5 matching uploaded image -->
-  <rect width="512" height="512" rx="108" fill="#01b0c5" />
+  <rect width="512" height="512" rx="108" fill="#17bf71" />
   
   <!-- Vector Emblem matching the user logo -->
   <g clip-path="url(#squircleClip)">
