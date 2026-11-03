@@ -4,22 +4,22 @@
   "description": "Akuna Capital institutional digital assets, quantitative strategies, peer-to-peer escrows, and high-frequency automated trading portfolios.",
   "icons": [
     {
-      "src": "/assets/aistudio/image_a10b7e83.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/aistudio/image_a10b7e83.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon.svg",
       "type": "image/svg+xml",
-      "sizes": "any",
+      "sizes": "192x192",
       "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "id": "/?source=pwa",

@@ -2449,7 +2449,7 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
                 {/* Akuna Capital Rounded App Icon */}
                 <div className="w-18 h-18 rounded-2xl bg-zinc-950 border border-zinc-200 shadow-md flex items-center justify-center shrink-0 overflow-hidden select-none">
                   <img 
-                    src="/assets/aistudio/image_a10b7e83.png" 
+                    src="/icon.svg" 
                     alt="Akuna Capital" 
                     className="w-full h-full object-contain"
                     referrerPolicy="no-referrer"
@@ -3171,7 +3171,7 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
                 <div className="w-20 h-20 mx-auto rounded-3xl bg-zinc-950 border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10 flex items-center justify-center overflow-hidden relative group mb-3">
                   <div className="absolute inset-0 bg-emerald-500/10 rounded-3xl animate-pulse"></div>
                   <img 
-                    src="/assets/aistudio/image_a10b7e83.png" 
+                    src="/icon.svg" 
                     alt="Akuna Capital" 
                     className="w-14 h-14 object-contain rounded-2xl relative z-10"
                     referrerPolicy="no-referrer"

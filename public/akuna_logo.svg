@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 680 180" width="680" height="180">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 180" width="680" height="180">
   <defs>
     <!-- Dark Navy Slate Base Container -->
     <radialGradient id="akunaLogoBg" cx="50%" cy="30%" r="90%">
@@ -13,19 +13,16 @@
   <!-- Background Card -->
   <rect width="680" height="180" rx="28" fill="url(#akunaLogoBg)" stroke="#1e293b" stroke-width="1.5" />
 
-  <!-- New Akuna Logo Symbol on Left -->
+  <!-- Akuna Logo Symbol on Left -->
   <g transform="translate(44, 34)">
-    <rect width="112" height="112" rx="26" fill="#01b0c5" />
+    <rect width="112" height="112" rx="26" fill="#17bf71" />
     <g clip-path="url(#logoSquircle)">
-      <image 
-        href="/assets/aistudio/image_a10b7e83.png" 
-        xlink:href="/assets/aistudio/image_a10b7e83.png" 
-        x="0" 
-        y="0" 
-        width="112" 
-        height="112" 
-        preserveAspectRatio="none"
-      />
+      <g transform="scale(0.21875)">
+        <!-- Top Left Sail -->
+        <path d="M 256 56 L 256 276 C 248 266 182 208 182 144 C 182 82 236 58 256 56 Z" fill="#ffffff" />
+        <!-- Bottom Right Sail -->
+        <path d="M 256 236 L 256 456 C 264 446 330 388 330 324 C 330 262 276 238 256 236 Z" fill="#ffffff" />
+      </g>
     </g>
   </g>
 
@@ -34,7 +31,7 @@
     <text font-family="-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', Inter, sans-serif" font-weight="900" font-size="38" letter-spacing="4" fill="#FFFFFF">
       AKUNA
     </text>
-    <text x="180" font-family="-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', Inter, sans-serif" font-weight="300" font-size="38" letter-spacing="6" fill="#01b0c5">
+    <text x="180" font-family="-apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', Inter, sans-serif" font-weight="300" font-size="38" letter-spacing="6" fill="#17bf71">
       CAPITAL
     </text>
   </g>

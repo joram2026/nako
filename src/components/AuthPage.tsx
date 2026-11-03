@@ -509,7 +509,7 @@ export default function AuthPage({ onSuccess, path, navigate }: AuthPageProps) {
         <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white border border-slate-200 shadow-xs mb-4">
           <div className="w-6 h-6 rounded-md overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
             <img 
-              src="/assets/aistudio/image_a10b7e83.png" 
+              src="/icon.svg" 
               alt="Akuna Capital" 
               className="w-full h-full object-contain rounded-md"
               referrerPolicy="no-referrer"

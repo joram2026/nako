@@ -3670,7 +3670,7 @@ export default function StandardUserDashboard({
               title="Open profile"
             >
               <div className="w-8 h-8 rounded-xl bg-slate-800/90 border border-slate-700/80 p-0.5 flex items-center justify-center shrink-0 shadow-sm group-hover:border-slate-600 transition-colors overflow-hidden">
-                <img src="/assets/aistudio/image_a10b7e83.png" alt="Akuna Capital" className="w-full h-full object-contain rounded-lg" />
+                <img src="/icon.svg" alt="Akuna Capital" className="w-full h-full object-contain rounded-lg" />
               </div>
               <h1 className="font-bold text-base sm:text-lg tracking-tight text-white font-sans truncate group-hover:text-slate-200 transition-colors">
                 {profile?.fullName || user?.displayName || (user?.email ? user.email.split('@')[0] : 'User')}
@@ -4600,7 +4600,7 @@ export default function StandardUserDashboard({
                               <div className="mt-3 pt-2.5 border-t border-slate-100 flex justify-between items-center text-[10px] font-mono">
                                 <div className="flex items-center gap-1 font-bold text-slate-500">
                                   <Unlock size={11} className="text-emerald-600 shrink-0" />
-                                  <span>Movable:</span>
+                                  <span>Liquid:</span>
                                   <span className="text-emerald-600 font-extrabold">
                                     {asset.unlockedAmount.toLocaleString(undefined, {
                                       minimumFractionDigits: asset.symbol === 'BTC' || asset.symbol === 'ETH' ? 4 : 2,
@@ -4610,7 +4610,7 @@ export default function StandardUserDashboard({
                                 </div>
                                 <div className="flex items-center gap-1 font-bold text-slate-500">
                                   <Activity size={11} className="text-amber-600 shrink-0" />
-                                  <span>Traded:</span>
+                                  <span>Trading:</span>
                                   <span className="text-amber-600 font-extrabold">
                                     {asset.lockedAmount.toLocaleString(undefined, {
                                       minimumFractionDigits: asset.symbol === 'BTC' || asset.symbol === 'ETH' ? 4 : 2,
@@ -7106,7 +7106,7 @@ export default function StandardUserDashboard({
                                   <span className={`inline-flex items-center gap-1 mt-0.5 text-[8px] sm:text-[9px] font-extrabold block whitespace-nowrap ${
                                     isLightTheme ? 'text-amber-800/90' : 'text-amber-400'
                                   }`}>
-                                    ({locked.toFixed(2)} {coin.symbol} Traded)
+                                    ({locked.toFixed(2)} {coin.symbol} Trading)
                                   </span>
                                 )}
                               </div>

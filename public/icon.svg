@@ -1,28 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <clipPath id="squircleClip">
       <rect width="512" height="512" rx="108" />
     </clipPath>
   </defs>
-  <!-- Background Squircle: Vibrant Cyan/Teal #01b0c5 matching uploaded image -->
+  <!-- Background Squircle: Primary Emerald Green #17bf71 -->
   <rect width="512" height="512" rx="108" fill="#17bf71" />
   
   <!-- Vector Emblem matching the user logo -->
   <g clip-path="url(#squircleClip)">
     <!-- Top Left Sail -->
-    <path d="M 256 68 L 256 272 C 235 260 178 206 178 140 C 178 86 230 68 256 68 Z" fill="#ffffff" />
+    <path d="M 256 56 L 256 276 C 248 266 182 208 182 144 C 182 82 236 58 256 56 Z" fill="#ffffff" />
     <!-- Bottom Right Sail -->
-    <path d="M 256 240 L 256 444 C 277 432 334 380 334 314 C 334 260 282 240 256 240 Z" fill="#ffffff" />
-
-    <!-- 1:1 Pixel-Accurate Image Overlay -->
-    <image 
-      href="/assets/aistudio/image_a10b7e83.png" 
-      xlink:href="/assets/aistudio/image_a10b7e83.png" 
-      x="0" 
-      y="0" 
-      width="512" 
-      height="512" 
-      preserveAspectRatio="none"
-    />
+    <path d="M 256 236 L 256 456 C 264 446 330 388 330 324 C 330 262 276 238 256 236 Z" fill="#ffffff" />
   </g>
 </svg>
