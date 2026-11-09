@@ -2362,21 +2362,18 @@ export default function ProfileView({ user, onBack }: ProfileViewProps) {
                       Telegram Group Link
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs sm:text-sm font-bold text-sky-700 tracking-tight select-all">
-                        https://t.me/akunacpt
-                      </span>
-                      <span className="text-[9px] font-bold text-sky-600 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded">
-                        @akunacpt
+                      <span className="font-mono text-xs sm:text-sm font-bold text-sky-700 tracking-tight select-all break-all">
+                        https://t.me/+x6f3Dz6eySkwOTNk
                       </span>
                     </div>
                   </div>
 
                   <a
                     id="telegram-official-group-link"
-                    href="https://t.me/akunacpt"
+                    href="https://t.me/+x6f3Dz6eySkwOTNk"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-[#229ED9] hover:bg-[#1d8bc0] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-sky-500/20 active:scale-95 no-underline"
+                    className="px-4 py-2 bg-[#229ED9] hover:bg-[#1d8bc0] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-sky-500/20 active:scale-95 no-underline shrink-0"
                   >
                     <Send size={13} className="translate-x-0.5" />
                     <span>Join Telegram Group</span>

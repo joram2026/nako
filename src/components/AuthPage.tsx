@@ -1117,7 +1117,7 @@ export default function AuthPage({ onSuccess, path, navigate }: AuthPageProps) {
       >
         <a
           id="auth-floating-support-btn"
-          href="https://t.me/akunacpt"
+          href="https://t.me/+x6f3Dz6eySkwOTNk"
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => {
@@ -1126,7 +1126,7 @@ export default function AuthPage({ onSuccess, path, navigate }: AuthPageProps) {
             }
           }}
           className="relative flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 via-emerald-400 to-teal-300 text-slate-950 shadow-xl shadow-emerald-500/30 border-2 border-white/90 focus:outline-none group active:shadow-inner"
-          title="Community & Support (@akunacpt)"
+          title="Community Group (Telegram)"
           aria-label="Open Telegram Community Group"
         >
           {/* Live Online Status Dot */}
